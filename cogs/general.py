@@ -68,7 +68,7 @@ class general(commands.Cog):
 					break
 			
 			if found_command:
-				embed = discord.Embed(title=f"{found_command.name}\n> {found_command.help or 'no description'}", color=discord.Color.from_rgb(241, 227, 226))
+				embed = discord.Embed(title=f"{found_command.name}", description=f"{found_command.help or 'no description'}", color=discord.Color.from_rgb(241, 227, 226))
 				await ctx.send(embed=embed, ephemeral=True)
 			else:
 				await ctx.send(f"no cog/cmd found named {search}", ephemeral=True)
