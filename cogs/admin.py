@@ -47,10 +47,10 @@ class admin(commands.Cog):
 		await ctx.send(embed=embed, ephemeral=True)
 
 	# unsync
-	@commands.command(name="unsync", help="Unsynchonizes the slash commands.")
+	@commands.command(name="unsync", help="unsync app commands")
 	@app_commands.describe(scope="The scope of the sync. Can be `global`, `current_guild` or `guild`")
 	@commands.has_permissions(administrator=True)
-	async def unsync(self, context: Context, scope: str) -> None:
+	async def unsync(self, context: Context, scope: str = "guild") -> None:
 
 		if scope == "global":
 			context.bot.tree.clear_commands(guild=None)
