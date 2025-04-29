@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 bot = commands.Bot(command_prefix=",", help_command=None, intents=discord.Intents.all())
-disabled_cogs = ["catalog", "serverembed", "apps", "fun", "misc"]
+disabled_cogs = ["catalog", "serverembed", "apps", "fun"]
 
 @bot.event
 async def on_ready():
