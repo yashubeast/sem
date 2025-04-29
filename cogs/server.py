@@ -12,20 +12,17 @@ class server(commands.Cog):
 	@commands.Cog.listener()
 	async def on_ready(self):
 		print(f"{__name__} is online!")
-		# self.bot.db = await aiosqlite.connect("assets/sembase.db")
-		# async with self.bot.db.cursor() as cursor:
-			# await cursor.execute("CREATE TABLE IF NOT EXISTS catalog (name TEXT, msg_id INT, guild INT, channel INT)")
 
 	# server (group)
-	@commands.hybrid_group(help="tools for server listing")
+	@commands.hybrid_group(help="tools for server listing", aliases=["s"])
 	@commands.has_permissions(administrator=True)
 	async def server(self, ctx):
 		if ctx.invoked_subcommand is None:
-			return await ctx.send("remind yasu to add something here.")
+			pass
 
 	# server add
-	@server.command(name="add", aliases=["a"], help="Add a new server message")
-	@app_commands.describe(name="Server name", message="Full message to store")
+	@server.command(name="add", aliases=["a"], help="add a new server message")
+	@app_commands.describe(name="server name", message="full message to store")
 	async def add(self, ctx: Context, name: str, *, message: str):
 		try:
 			with open(json_file_path, "r", encoding="utf-8") as f:
@@ -36,7 +33,7 @@ class server(commands.Cog):
 			server_name = name.lower()
 
 			if not server_name.strip():
-				return await ctx.send("Server name cannot be empty.")
+				return await ctx.send("server name cannot be empty")
 
 			servers_list.append({server_name: message})
 
@@ -45,14 +42,14 @@ class server(commands.Cog):
 			with open(json_file_path, "w", encoding="utf-8") as f:
 				json.dump(data, f, indent=4)
 
-			await ctx.send(f"Server `{server_name}` added successfully!")
+			await ctx.send(f"server `{server_name}` added successfully")
 
 		except Exception as e:
-			await ctx.send(f"Error: {e}")
+			await ctx.send(f"error: {e}")
 
 	# server delete
-	@server.command(name="delete", aliases=["d", "del"], help="Delete a server message")
-	@app_commands.describe(server="Name of the server to delete")
+	@server.command(name="delete", aliases=["d", "del"], help="delete a server message")
+	@app_commands.describe(server="name of the server to delete")
 	async def delete(self, ctx, *,server: str):
 		try:
 			with open (json_file_path, "r") as f:
@@ -61,7 +58,7 @@ class server(commands.Cog):
 			servers_list = data.get("servers_list", [])
 
 			if not any(server.lower() == key.lower() for entry in servers_list for key in entry):
-				await ctx.send(f"Server `{server}` doesn't exist.")
+				await ctx.send(f"server `{server}` doesn't exist ")
 				return
 			
 			for i, entry in enumerate(servers_list):
@@ -72,17 +69,17 @@ class server(commands.Cog):
 			with open (json_file_path, "w") as f:
 				json.dump(data, f, indent=4)
 			
-			await ctx.send(f"Server `{server}` deleted.")
+			await ctx.send(f"server `{server}` deleted")
 
 		except FileNotFoundError:
-			await ctx.send("Server data fiel not found.")
+			await ctx.send("server data fiel not found")
 		except json.JSONDecodeError:
-			await ctx.send("Error reading the server data file.")
+			await ctx.send("error reading the server data file")
 		except Exception as e:
-			return await ctx.send(f"Error: {e}")
+			return await ctx.send(f"error: {e}")
 
 	# server list
-	@server.command(name="list", alises=["l"], help="List all servers")
+	@server.command(name="list", alises=["l"], help="list all servers")
 	async def list(self, ctx: Context):
 		with open(json_file_path, "r") as f:
 			data = json.load(f)
@@ -90,14 +87,14 @@ class server(commands.Cog):
 		servers_list = data.get("servers_list", [])
 
 		if not servers_list:
-			return await ctx.send("No servers in list")
+			return await ctx.send("no servers in list")
 
 		servers = "\n".join(f"- {list(server_name.keys())[0]}" for server_name in servers_list if server_name)
-		await ctx.send(f"**Servers:**\n{servers}")
+		await ctx.send(f"**servers:**\n{servers}")
 
 	# server show
-	@server.command(name="show", aliases=["s"], help="Previews a server message")
-	@app_commands.describe(server="Name of the server to send")
+	@server.command(name="show", aliases=["s"], help="previews a server message")
+	@app_commands.describe(server="name of the server to send")
 	async def show(self, ctx, *,server: str):
 		try:
 			with open (json_file_path, "r") as f:
@@ -107,20 +104,21 @@ class server(commands.Cog):
 			server_message = next((list(entry.values())[0] for entry in servers_list if server.lower() in (key.lower() for key in entry)))
 
 			if not server_message:
-				await ctx.send(f"Server `{server}` doesn't exist.")
+				await ctx.send(f"server `{server}` doesn't exist")
 				return
 			
 			await ctx.send(server_message)
 
 		except FileNotFoundError:
-			await ctx.send("Server data fiel not found.")
+			await ctx.send("server data fiel not found.")
 		except json.JSONDecodeError:
-			await ctx.send("Error reading the server data file.")
+			await ctx.send("error reading the server data file.")
 		except Exception as e:
-			return await ctx.send(f"Error: {e}")
+			return await ctx.send(f"error: {e}")
 
 	# server nuke
 	@server.command(name="nuke", help="nukes data")
+	@app_commands.describe(target="options: servers, messages(msgs)")
 	async def nuke(self, ctx, target: str):
 		try:
 			target = target.lower()
@@ -142,13 +140,13 @@ class server(commands.Cog):
 			with open(json_file_path, "w", encoding="utf-8") as f:
 				json.dump(data, f, indent=4)
 			
-			await ctx.send(f"nuked {target}")
+			await ctx.send(f"nuked `{target}`")
 		
 		except Exception as e:
 			await ctx.send(f"error: {e}")
 
 	# server initiate, send all the server messages
-	@server.command(name="initiate", aliases=["i"], help="Initiate all server messages")
+	@server.command(name="initiate", aliases=["i"], help="initiate all server messages")
 	async def initiate(self, ctx: Context):
 		# load json
 		with open(json_file_path, "r", encoding="utf-8") as f:
@@ -191,7 +189,7 @@ class server(commands.Cog):
 				# save id to messages_list
 				messages_list.append(str(new_message.id))
 
-			# look into this, probably not working as intended
+			# initiated message deleted (i forgot how this logic works in its entirety so i have nothing to explain here)
 			except discord.NotFound:
 				# message doesn't exist, delete broken msg id
 				del messages_list[idx]
@@ -205,7 +203,7 @@ class server(commands.Cog):
 
 			# error handling
 			except Exception as e:
-				await ctx.send(f"Error handling server `{server_name}`: {e}")
+				await ctx.send(f"error handling server `{server_name}`: {e}")
 			
 			idx += 1
 			
@@ -226,7 +224,7 @@ class server(commands.Cog):
 			return await ctx.send("use sub-commands: up, down, above, below, to")
 
 	# server move up
-	@move.command(name="up", alises=["u"], help="Move server's position up by X amount")
+	@move.command(name="up", alises=["u"], help="move server's position up by X amount")
 	async def up(self, ctx, name : str, amount: int):
 
 		# load json
@@ -238,7 +236,7 @@ class server(commands.Cog):
 		index = next((i for i, server in enumerate(servers_list) if name in server), None)
 
 		if index is None:
-			await ctx.send(f"Server {name} doesn't exist")
+			await ctx.send(f"server `{name}` doesn't exist")
 			return
 
 		# calculate new position
@@ -253,10 +251,10 @@ class server(commands.Cog):
 		with open(json_file_path, "w", encoding="utf-8") as f:
 			json.dump(data, f, indent=4)
 
-		await ctx.send(f"Server {name} moved up by {amount}")
+		await ctx.send(f"server `{name}` moved up by `{amount}`")
 
 	# server move down
-	@move.command(name="down", aliases=["d"], help="Move a server's position down by X amount")
+	@move.command(name="down", aliases=["d"], help="move a server's position down by X amount")
 	async def down(self, ctx, name: str, amount: int):
 		# load json
 		with open(json_file_path, "r", encoding="utf-8") as f:
@@ -268,7 +266,7 @@ class server(commands.Cog):
 		index = next((i for i, server in enumerate(servers_list) if name.lower() in (key.lower() for key in server)), None)
 
 		if index is None:
-			await ctx.send(f"Server with key {name} doesn't exist")
+			await ctx.send(f"server `{name}` doesn't exist")
 			return
 
 		# calculate new position
@@ -283,10 +281,10 @@ class server(commands.Cog):
 		with open(json_file_path, "w", encoding="utf-8") as f:
 			json.dump(data, f, indent=4)
 
-		await ctx.send(f"Server {name} moved down by {amount}")
+		await ctx.send(f"server {name} moved down by `{amount}`")
 
 	# server move to
-	@move.command(name="to", aliases=["t"], help="Move a server to Xth position")
+	@move.command(name="to", aliases=["t"], help="move a server to Xth position")
 	async def to(self, ctx, name: str, index: int):
 		try:
 			# load json
@@ -299,7 +297,7 @@ class server(commands.Cog):
 			current_index = next((i for i, server in enumerate(servers_list) if name.lower() in (key.lower() for key in server)), None)
 
 			if current_index is None:
-				await ctx.send(f"Server {name} doesn't exist")
+				await ctx.send(f"server `{name}` doesn't exist")
 				return
 
 			# ensuring target index is within bounds
@@ -314,13 +312,13 @@ class server(commands.Cog):
 			with open(json_file_path, "w", encoding="utf-8") as f:
 				json.dump(data, f, indent=4)
 
-			await ctx.send(f"Server {name} moved to position {index}")
+			await ctx.send(f"server `{name}` moved to position `{index}`")
 		
 		except Exception as e:
-			await ctx.send(f"Error: {e}")
+			await ctx.send(f"error: {e}")
 
 	# server move above
-	@move.command(name="above", aliases=["a"], help="Move a server above another server")
+	@move.command(name="above", aliases=["a"], help="move a server above another server")
 	async def above(self, ctx, name: str, above_name: str):
 		try:
 			# load json
@@ -334,11 +332,11 @@ class server(commands.Cog):
 			target_index = next((i for i, server in enumerate(servers_list) if above_name.lower() in (key.lower() for key in server)), None)
 
 			if moving_index is None:
-				await ctx.send(f"Server {name} doesn't exist")
+				await ctx.send(f"server `{name}` doesn't exist")
 				return
 
 			if target_index is None:
-				await ctx.send(f"Server {above_name} doesn't exist")
+				await ctx.send(f"server `{above_name}` doesn't exist")
 				return
 
 			# remove moving server
@@ -356,13 +354,13 @@ class server(commands.Cog):
 			with open(json_file_path, "w", encoding="utf-8") as f:
 				json.dump(data, f, indent=4)
 
-			await ctx.send(f"Moved {name} above {above_name}")
+			await ctx.send(f"moved `{name}` above `{above_name}`")
 			
 		except Exception as e:
-			await ctx.send(f"Error: {e}")
+			await ctx.send(f"error: {e}")
 
 	# server move below
-	@move.command(name="below", aliases=["b"], help="Move a server below another server")
+	@move.command(name="below", aliases=["b"], help="move a server below another server")
 	async def below(self, ctx, name: str, below_name: str):
 		try:
 			# load json
@@ -376,11 +374,11 @@ class server(commands.Cog):
 			target_index = next((i for i, server in enumerate(servers_list) if below_name.lower() in (key.lower() for key in server)), None)
 
 			if moving_index is None:
-				await ctx.send(f"Server {name} doesn't exist")
+				await ctx.send(f"server `{name}` doesn't exist")
 				return
 
 			if target_index is None:
-				await ctx.send(f"Server {below_name} doesn't exist")
+				await ctx.send(f"server `{below_name}` doesn't exist")
 				return
 
 			# remove moving server
@@ -398,16 +396,16 @@ class server(commands.Cog):
 			with open(json_file_path, "w", encoding="utf-8") as f:
 				json.dump(data, f, indent=4)
 
-			await ctx.send(f"Moved {name} below {below_name}")
+			await ctx.send(f"moved `{name}` below `{below_name}`")
 			
 		except Exception as e:
-			await ctx.send(f"Error: {e}")
+			await ctx.send(f"error: {e}")
 
 	# server import (group)
 	@server.group(name="import", help="import messages as server")
 	async def ximport(self, ctx):
 		if ctx.invoked_subcommand is None:
-			return await ctx.send("use import sub commands as, bulk")
+			return await ctx.send("use import subcommands: as, bulk")
 
 	# server import as
 	@ximport.command(name="as", help="import replied message as a server message")
@@ -431,9 +429,9 @@ class server(commands.Cog):
 					with open(json_file_path, "w", encoding="utf-8") as f:
 						json.dump(data, f, indent=4)
 					
-					await ctx.send(f"Server {name} imported")
+					await ctx.send(f"server `{name}` imported")
 				else:
-					await ctx.send("You need to reply to a message")
+					await ctx.send("you need to reply to a message")
 			else:
 				if message_id:
 					app_replied_message_id = int(message_id)
@@ -452,15 +450,15 @@ class server(commands.Cog):
 					with open(json_file_path, "w", encoding="utf-8") as f:
 						json.dump(data, f, indent=4)				
 					
-					await ctx.send(f"Server {name} imported")
+					await ctx.send(f"server `{name}` imported")
 				else:
 					await ctx.send("please provide a message id for importing")
 
 		except Exception as e:
-			await ctx.send(f"Error: {str(e)}")
+			await ctx.send(f"error: {str(e)}")
 
 	# server import bulk
-	@ximport.command(name="bulk", help="Bulk import server messages from message IDs")
+	@ximport.command(name="bulk", help="bulk import server messages from message IDs")
 	async def bulk(self, ctx, from_id: str, to_id: str, user: discord.User = None, exclude: str = None):
 		try:
 			collected_messages = []
@@ -483,7 +481,7 @@ class server(commands.Cog):
 						break
 
 			if not collected_messages:
-				await ctx.send("No messages collected.")
+				await ctx.send("no messages collected")
 				return
 
 			# load json
@@ -501,60 +499,60 @@ class server(commands.Cog):
 			with open(json_file_path, "w", encoding="utf-8") as f:
 				json.dump(data, f, indent=4)
 
-			await ctx.send(f"Successfully imported {len(collected_messages)} messages.")
+			await ctx.send(f"successfully imported {len(collected_messages)} messages")
 
 		except Exception as e:
-			await ctx.send(f"Error: {str(e)}")
+			await ctx.send(f"error: {str(e)}")
 
 	# visible cmd
-	@commands.hybrid_command(name="server_visibility", aliases=["sv"], help="toggle visibility of server", with_app_command=True)
-	@commands.has_permissions(administrator=True)
-	async def server_visibility(self, ctx, name: str):
-		try:
-			with open(json_file_path, "r") as f:
-				data = json.load(f)
+	# @commands.hybrid_command(name="server_visibility", aliases=["sv"], help="toggle visibility of server", with_app_command=True)
+	# @commands.has_permissions(administrator=True)
+	# async def server_visibility(self, ctx, name: str):
+	# 	try:
+	# 		with open(json_file_path, "r") as f:
+	# 			data = json.load(f)
 			
-			servers = data.get("servers", {})
-			visible_servers = data.get("visible_servers", {})
+	# 		servers = data.get("servers", {})
+	# 		visible_servers = data.get("visible_servers", {})
 
-			# find the input name in servers list
-			server = servers.get(name.lower())
+	# 		# find the input name in servers list
+	# 		server = servers.get(name.lower())
 
-			# server doesn't exist in servers
-			if server is None:
-				await ctx.send(f"{name} server not found.")
-				return
+	# 		# server doesn't exist in servers
+	# 		if server is None:
+	# 			await ctx.send(f"{name} server not found.")
+	# 			return
 
-			# if server is visible already
-			if name in visible_servers:
-				# server is already visible
-				server_data = visible_servers[name]
-				message_id = server_data.get("message_id")
-				channel_id = server_data.get("channel_id")
+	# 		# if server is visible already
+	# 		if name in visible_servers:
+	# 			# server is already visible
+	# 			server_data = visible_servers[name]
+	# 			message_id = server_data.get("message_id")
+	# 			channel_id = server_data.get("channel_id")
 
-				if message_id and channel_id:
-					try:
-						channel = await self.bot.fetch_channel(int(channel_id))
-						message = await channel.fetch_message(int(message_id))
-						await message.delete()
+	# 			if message_id and channel_id:
+	# 				try:
+	# 					channel = await self.bot.fetch_channel(int(channel_id))
+	# 					message = await channel.fetch_message(int(message_id))
+	# 					await message.delete()
 
-					except Exception as e:
-						await ctx.send(f"Failed to delete message (possibly inexistant): {e}")
+	# 				except Exception as e:
+	# 					await ctx.send(f"Failed to delete message (possibly inexistant): {e}")
 
-				del visible_servers[name]
-				await ctx.send(f"{name} server hidden.")
+	# 			del visible_servers[name]
+	# 			await ctx.send(f"{name} server hidden.")
 
-			else:
-				# server is NOT visible
-				visible_servers[name] = {}
-				await ctx.send(f"{name} server displayed.")
+	# 		else:
+	# 			# server is NOT visible
+	# 			visible_servers[name] = {}
+	# 			await ctx.send(f"{name} server displayed.")
 
-			data["visible_servers"] = visible_servers
-			with open(json_file_path, "w", encoding="utf-8") as f:
-				json.dump(data, f, indent=4)
+	# 		data["visible_servers"] = visible_servers
+	# 		with open(json_file_path, "w", encoding="utf-8") as f:
+	# 			json.dump(data, f, indent=4)
 
-		except Exception as e:
-			await ctx.send(f"Error: {e}")
+	# 	except Exception as e:
+	# 		await ctx.send(f"Error: {e}")
 
 async def setup(bot):
 	await bot.add_cog(server(bot))
