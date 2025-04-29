@@ -5,6 +5,14 @@ from discord import app_commands
 
 json_file_path = "assets/servers.json"
 
+def json_load():
+	with open(json_file_path, "r", encoding="utf-8") as f:
+		return json.load(f)
+
+def json_save(data):
+	with open(json_file_path, "w", encoding="utf-8") as f:
+		json.dump(data, f, indent=4)
+
 class server(commands.Cog):
 	def __init__(self, bot):
 		self.bot = bot
@@ -25,8 +33,8 @@ class server(commands.Cog):
 	@app_commands.describe(name="server name", message="full message to store")
 	async def add(self, ctx: Context, name: str, *, message: str):
 		try:
-			with open(json_file_path, "r", encoding="utf-8") as f:
-				data = json.load(f)
+			# load json
+			data = json_load()
 
 			servers_list = data.get("servers_list", [])
 
@@ -37,12 +45,11 @@ class server(commands.Cog):
 
 			servers_list.append({server_name: message})
 
-			# Save back to JSON
+			# save json
 			data["servers_list"] = servers_list
-			with open(json_file_path, "w", encoding="utf-8") as f:
-				json.dump(data, f, indent=4)
+			json_save(data)
 
-			await ctx.send(f"server `{server_name}` added successfully")
+			await ctx.send(f"server `{server_name}` added")
 
 		except Exception as e:
 			await ctx.send(f"error: {e}")
@@ -52,8 +59,8 @@ class server(commands.Cog):
 	@app_commands.describe(server="name of the server to delete")
 	async def delete(self, ctx, *,server: str):
 		try:
-			with open (json_file_path, "r") as f:
-				data = json.load(f)
+			# load json
+			data = json_load()
 
 			servers_list = data.get("servers_list", [])
 
@@ -66,8 +73,8 @@ class server(commands.Cog):
 					del servers_list[i]
 					break
 
-			with open (json_file_path, "w") as f:
-				json.dump(data, f, indent=4)
+			# save json
+			json_save(data)
 			
 			await ctx.send(f"server `{server}` deleted")
 
@@ -81,8 +88,8 @@ class server(commands.Cog):
 	# server list
 	@server.command(name="list", alises=["l"], help="list all servers")
 	async def list(self, ctx: Context):
-		with open(json_file_path, "r") as f:
-			data = json.load(f)
+		# load json
+		data = json_load()
 
 		servers_list = data.get("servers_list", [])
 
@@ -97,8 +104,7 @@ class server(commands.Cog):
 	@app_commands.describe(server="name of the server to send")
 	async def show(self, ctx, *,server: str):
 		try:
-			with open (json_file_path, "r") as f:
-				data = json.load(f)
+			data = json_load()
 
 			servers_list = data.get("servers_list", [])
 			server_message = next((list(entry.values())[0] for entry in servers_list if server.lower() in (key.lower() for key in entry)))
@@ -128,18 +134,16 @@ class server(commands.Cog):
 				return
 
 			# load json
-			with open(json_file_path, "r", encoding="utf-8") as f:
-				data = json.load(f)
+			data = json_load()
 			
 			if target == "servers":
 				data["servers_list"] = []
 			elif target in ["messages", "msgs"]:
 				data ["messages_list"] = []
 
-			# update json
-			with open(json_file_path, "w", encoding="utf-8") as f:
-				json.dump(data, f, indent=4)
-			
+			# save json
+			json_save(data)
+
 			await ctx.send(f"nuked `{target}`")
 		
 		except Exception as e:
@@ -149,8 +153,7 @@ class server(commands.Cog):
 	@server.command(name="initiate", aliases=["i"], help="initiate all server messages")
 	async def initiate(self, ctx: Context):
 		# load json
-		with open(json_file_path, "r", encoding="utf-8") as f:
-			data = json.load(f)
+		data = json_load()
 
 		# load dicts
 		servers_list = data.get("servers_list", [])
@@ -194,10 +197,9 @@ class server(commands.Cog):
 				# message doesn't exist, delete broken msg id
 				del messages_list[idx]
 
-				# update json
+				# save json
 				data["messages_list"] = messages_list
-				with open(json_file_path, "w", encoding="utf-8") as f:
-					json.dump(data, f, indent=4)
+				json_save(data)
 				
 				continue
 
@@ -207,10 +209,9 @@ class server(commands.Cog):
 			
 			idx += 1
 			
-		# update json
+		# save json
 		data["messages_list"] = messages_list
-		with open(json_file_path, "w", encoding="utf-8") as f:
-			json.dump(data, f, indent=4)
+		json_save(data)
 		
 		# if edited == 0 and added == 0:
 		# 	await ctx.send("No changes made.\n-# auto deleting...", delete_after=7)
@@ -228,8 +229,8 @@ class server(commands.Cog):
 	async def up(self, ctx, name : str, amount: int):
 
 		# load json
-		with open (json_file_path, "r") as f:
-			data = json.load(f)
+		data = json_load()
+
 		servers_list = data.get("servers_list", [])
 
 		# find the index
@@ -246,10 +247,9 @@ class server(commands.Cog):
 		server = servers_list.pop(index)
 		servers_list.insert(new_index, server)
 
-		# update json
+		# save json
 		data["servers_list"] = servers_list
-		with open(json_file_path, "w", encoding="utf-8") as f:
-			json.dump(data, f, indent=4)
+		json_save(data)
 
 		await ctx.send(f"server `{name}` moved up by `{amount}`")
 
@@ -257,8 +257,7 @@ class server(commands.Cog):
 	@move.command(name="down", aliases=["d"], help="move a server's position down by X amount")
 	async def down(self, ctx, name: str, amount: int):
 		# load json
-		with open(json_file_path, "r", encoding="utf-8") as f:
-			data = json.load(f)
+		data = json_load()
 
 		servers_list = data.get("servers_list", [])
 
@@ -276,10 +275,9 @@ class server(commands.Cog):
 		server = servers_list.pop(index)
 		servers_list.insert(new_index, server)
 
-		# update json
+		# save json
 		data["servers_list"] = servers_list
-		with open(json_file_path, "w", encoding="utf-8") as f:
-			json.dump(data, f, indent=4)
+		json_save(data)
 
 		await ctx.send(f"server {name} moved down by `{amount}`")
 
@@ -288,8 +286,7 @@ class server(commands.Cog):
 	async def to(self, ctx, name: str, index: int):
 		try:
 			# load json
-			with open(json_file_path, "r", encoding="utf-8") as f:
-				data = json.load(f)
+			data = json_load()
 
 			servers_list = data.get("servers_list", [])
 
@@ -307,10 +304,9 @@ class server(commands.Cog):
 			server = servers_list.pop(current_index)
 			servers_list.insert(target_index, server)
 
-			# update json
+			# save json
 			data["servers_list"] = servers_list
-			with open(json_file_path, "w", encoding="utf-8") as f:
-				json.dump(data, f, indent=4)
+			json_save(data)
 
 			await ctx.send(f"server `{name}` moved to position `{index}`")
 		
@@ -322,8 +318,7 @@ class server(commands.Cog):
 	async def above(self, ctx, name: str, above_name: str):
 		try:
 			# load json
-			with open(json_file_path, "r", encoding="utf-8") as f:
-				data = json.load(f)
+			data = json_load()
 
 			servers_list = data.get("servers_list", [])
 
@@ -349,10 +344,9 @@ class server(commands.Cog):
 			# insert moving server above target
 			servers_list.insert(target_index, server)
 
-			# save
+			# save json
 			data["servers_list"] = servers_list
-			with open(json_file_path, "w", encoding="utf-8") as f:
-				json.dump(data, f, indent=4)
+			json_save(data)
 
 			await ctx.send(f"moved `{name}` above `{above_name}`")
 			
@@ -364,8 +358,7 @@ class server(commands.Cog):
 	async def below(self, ctx, name: str, below_name: str):
 		try:
 			# load json
-			with open(json_file_path, "r", encoding="utf-8") as f:
-				data = json.load(f)
+			data = json_load()
 
 			servers_list = data.get("servers_list", [])
 
@@ -391,10 +384,9 @@ class server(commands.Cog):
 			# insert moving server below target
 			servers_list.insert(target_index + 1, server)
 
-			# update json
+			# save json
 			data["servers_list"] = servers_list
-			with open(json_file_path, "w", encoding="utf-8") as f:
-				json.dump(data, f, indent=4)
+			json_save(data)
 
 			await ctx.send(f"moved `{name}` below `{below_name}`")
 			
@@ -418,16 +410,14 @@ class server(commands.Cog):
 					server_content = replied_message.content
 
 					# load json
-					with open(json_file_path, "r", encoding="utf-8") as f:
-						data = json.load(f)
+					data = json_load()
 					
 					servers_list = data.get("servers_list", [])
 					servers_list.append({name: server_content})
 
-					# update json
+					# save json
 					data["servers_list"] = servers_list
-					with open(json_file_path, "w", encoding="utf-8") as f:
-						json.dump(data, f, indent=4)
+					json_save(data)
 					
 					await ctx.send(f"server `{name}` imported")
 				else:
@@ -439,16 +429,14 @@ class server(commands.Cog):
 					app_server_content = app_replied_message.content
 
 					# load json
-					with open(json_file_path, "r", encoding="utf-8") as f:
-						data = json.load(f)
+					data = json_load()
 					
 					servers_list = data.get("servers_list", [])
 					servers_list.append({name: app_server_content})
 
-					# update json
+					# save json
 					data["servers_list"] = servers_list
-					with open(json_file_path, "w", encoding="utf-8") as f:
-						json.dump(data, f, indent=4)				
+					json_save(data)
 					
 					await ctx.send(f"server `{name}` imported")
 				else:
@@ -485,8 +473,7 @@ class server(commands.Cog):
 				return
 
 			# load json
-			with open(json_file_path, "r", encoding="utf-8") as f:
-				data = json.load(f)
+			data = json_load()
 
 			servers_list = data.get("servers_list", [])
 
@@ -494,10 +481,9 @@ class server(commands.Cog):
 			for msg in reversed(collected_messages):
 				servers_list.append({f"{msg.id}": msg.content})
 
-			# update json
+			# save json
 			data["servers_list"] = servers_list
-			with open(json_file_path, "w", encoding="utf-8") as f:
-				json.dump(data, f, indent=4)
+			json_save(data)
 
 			await ctx.send(f"successfully imported {len(collected_messages)} messages")
 
