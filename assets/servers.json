@@ -1,5 +1,6 @@
 {
-    "servers_list": [
-    ],
-    "messages_list": []
+    "servers_list": [],
+    "messages_list": [],
+    "sticky": {
+    }
 }
