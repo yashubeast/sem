@@ -29,7 +29,7 @@ class server(commands.Cog):
 			pass
 
 	# server add
-	@server.command(name="add", aliases=["a"], help="add a new server message")
+	@server.command(name="add", aliases=["a"], help="add a new server")
 	@app_commands.describe(name="server name", message="full message to store")
 	async def add(self, ctx: Context, name: str, *, message: str):
 		try:
@@ -55,7 +55,7 @@ class server(commands.Cog):
 			await ctx.send(f"error: {e}")
 
 	# server delete
-	@server.command(name="delete", aliases=["d", "del"], help="delete a server message")
+	@server.command(name="delete", aliases=["d", "del"], help="delete a server")
 	@app_commands.describe(server="name of the server to delete")
 	async def delete(self, ctx, *,server: str):
 		try:
@@ -150,7 +150,7 @@ class server(commands.Cog):
 			await ctx.send(f"error: {e}")
 
 	# server initiate, send all the server messages
-	@server.command(name="initiate", aliases=["i"], help="initiate all server messages")
+	@server.command(name="initiate", aliases=["i"], help="initiate all server")
 	async def initiate(self, ctx: Context):
 		# load json
 		data = json_load()
@@ -222,10 +222,10 @@ class server(commands.Cog):
 	@server.group(help="repositioning commands for servers")
 	async def move(self, ctx):
 		if ctx.invoked_subcommand is None:
-			return await ctx.send("use sub-commands: up, down, above, below, to")
+			pass
 
 	# server move up
-	@move.command(name="up", alises=["u"], help="move server's position up by X amount")
+	@move.command(name="up", alises=["u"], help="move up by X amount")
 	async def up(self, ctx, name : str, amount: int):
 
 		# load json
@@ -254,7 +254,7 @@ class server(commands.Cog):
 		await ctx.send(f"server `{name}` moved up by `{amount}`")
 
 	# server move down
-	@move.command(name="down", aliases=["d"], help="move a server's position down by X amount")
+	@move.command(name="down", aliases=["d"], help="move down by X amount")
 	async def down(self, ctx, name: str, amount: int):
 		# load json
 		data = json_load()
@@ -282,7 +282,7 @@ class server(commands.Cog):
 		await ctx.send(f"server {name} moved down by `{amount}`")
 
 	# server move to
-	@move.command(name="to", aliases=["t"], help="move a server to Xth position")
+	@move.command(name="to", aliases=["t"], help="move to Xth position")
 	async def to(self, ctx, name: str, index: int):
 		try:
 			# load json
@@ -314,7 +314,7 @@ class server(commands.Cog):
 			await ctx.send(f"error: {e}")
 
 	# server move above
-	@move.command(name="above", aliases=["a"], help="move a server above another server")
+	@move.command(name="above", aliases=["a"], help="move above another server")
 	async def above(self, ctx, name: str, above_name: str):
 		try:
 			# load json
@@ -354,7 +354,7 @@ class server(commands.Cog):
 			await ctx.send(f"error: {e}")
 
 	# server move below
-	@move.command(name="below", aliases=["b"], help="move a server below another server")
+	@move.command(name="below", aliases=["b"], help="move below another server")
 	async def below(self, ctx, name: str, below_name: str):
 		try:
 			# load json
@@ -446,7 +446,7 @@ class server(commands.Cog):
 			await ctx.send(f"error: {str(e)}")
 
 	# server import bulk
-	@ximport.command(name="bulk", help="bulk import server messages from message IDs")
+	@ximport.command(name="bulk", help="bulk import server messages using range")
 	async def bulk(self, ctx, from_id: str, to_id: str, user: discord.User = None, exclude: str = None):
 		try:
 			collected_messages = []
