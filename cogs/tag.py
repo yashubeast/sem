@@ -3,7 +3,7 @@ from discord.ext import commands
 from math import ceil
 from discord import app_commands
 
-class tags(commands.Cog):
+class tag(commands.Cog):
 	def __init__(self, bot):
 		self.bot = bot
 	
@@ -94,4 +94,4 @@ class tags(commands.Cog):
 			await ctx.send(f"error: {e}")
 	
 async def setup(bot):
-	await bot.add_cog(tags(bot))
+	await bot.add_cog(tag(bot))
