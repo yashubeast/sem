@@ -1,7 +1,7 @@
 import discord, os, asyncio, json
 from discord.ext import commands
 from dotenv import load_dotenv
-from utils.cog_handler import *
+from utils.cog_handler import load_all_cogs
 
 load_dotenv()
 
