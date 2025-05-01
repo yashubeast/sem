@@ -297,7 +297,7 @@ class server(commands.Cog):
 
 	# server move above
 	@move.command(name="above", aliases=["a"], help="move above another server")
-	@app_commands.describe(name="server to move", amount="name of the server to move above")
+	@app_commands.describe(name="server to move", above_name="name of the server to move above")
 	async def above(self, ctx, name: str, above_name: str):
 		# load json
 		data = json_load()
@@ -334,7 +334,7 @@ class server(commands.Cog):
 			
 	# server move below
 	@move.command(name="below", aliases=["b"], help="move below another server")
-	@app_commands.describe(name="server to move", amount="name of the server to move below")
+	@app_commands.describe(name="server to move", below_name="name of the server to move below")
 	async def below(self, ctx, name: str, below_name: str):
 		# load json
 		data = json_load()
