@@ -35,7 +35,7 @@ class sticky(commands.Cog):
 	async def on_message(self, message: discord.Message):
 		try:
 			channel = message.channel
-			channel_id = str(message.channel.id)
+			channel_id = str(channel.id)
 
 			# return if channel is not a sticky_channel
 			if channel_id not in self.sticky_channel_cache:return
