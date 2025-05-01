@@ -84,5 +84,48 @@ class admin(commands.Cog):
 		await ctx.send(message)
 		await ctx.message.delete()
 
+	# sendembed cmd
+	@commands.hybrid_command(name="sendembed", help="make the bot send custom embed")
+	@app_commands.describe(
+		title="title of the embed",
+		description="description of the embed",
+		fields="dynamic fields as 'name&value' pairs separated by | (pipes)",
+		footer="Optional footer text",
+		color="hex color (example #f1e3e2)"
+	)
+	@commands.has_permissions(administrator=True)
+	async def sendembed(
+		self,
+		ctx: Context,
+		title: str = None,
+		description: str = None,
+		fields: str = None,
+		footer: str = None,
+		color: str = "#f1e3e2"
+	):
+		# Convert hex color string to int
+		try:
+			embed_color = int(color.strip("#"), 16)
+		except ValueError:
+			await ctx.reply("invalid color format, use hex like #f1e3w2", ephemeral=True)
+			return
+
+		embed = discord.Embed(
+			title=title or None,
+			description=description or None,
+			color=embed_color
+		)
+
+		if fields:
+			for field in fields.split("|"):
+				if "&"in field:
+					name, value = field.split("&", 1)
+					embed.add_field(name=name.strip(), value=value.strip(), inline=False)
+
+		if footer:
+			embed.set_footer(text=f"{footer}")
+
+		await ctx.send(embed=embed)
+
 async def setup(bot):
 	await bot.add_cog(admin(bot))
