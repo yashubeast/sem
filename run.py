@@ -35,6 +35,17 @@ async def on_ready():
 		status=discord.Status.online
 	)
 
+@bot.event
+async def on_command_error(ctx, error):
+	if isinstance(error, commands.MissingPermissions):
+		await ctx.send("your aah lacks perms to use this cmd")
+	elif isinstance(error, commands.MissingRequiredArgument):
+		await ctx.send("missing a required arg\n-# deleting..", delete_after=3)
+	elif isinstance(error, commands.CommandNotFound):
+		return
+	else:
+		await ctx.send(f":warning: error :warning: contact yasu ```py\n{error}```")
+
 async def load():
 	for filename in os.listdir("./cogs"):
 		if filename.endswith(".py"):
@@ -46,4 +57,5 @@ async def main():
 	async with bot:
 		await load()
 		await bot.start(os.getenv("TOKEN"))
+
 asyncio.run(main())
