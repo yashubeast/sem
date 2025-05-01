@@ -44,46 +44,38 @@ class info(commands.Cog):
 	# info server
 	@info.command(name="server", help="info on current server")
 	async def server(self, ctx):
-		try:
-			guild = ctx.guild
-			embed = discord.Embed(
-				title=guild.name,
-				color=default_color
-				)
-			if guild.icon:
-				embed.set_thumbnail(url=guild.icon.url)
+		guild = ctx.guild
+		embed = discord.Embed(
+			title=guild.name,
+			color=default_color
+			)
+		if guild.icon:
+			embed.set_thumbnail(url=guild.icon.url)
 
-			embed.add_field(name="members", value=guild.member_count)
-			embed.add_field(name="channels", value=f"{len(guild.channels)}")
-			embed.add_field(name=f"roles", value=f"{len(guild.roles)}")
-			embed.add_field(name=f"created on", value=f"{format_date_with_suffix(guild.created_at)}\n-# {time_ago(guild.created_at)}", inline=False)
-			
-			await ctx.send(embed=embed)
+		embed.add_field(name="members", value=guild.member_count)
+		embed.add_field(name="channels", value=f"{len(guild.channels)}")
+		embed.add_field(name=f"roles", value=f"{len(guild.roles)}")
+		embed.add_field(name=f"created on", value=f"{format_date_with_suffix(guild.created_at)}\n-# {time_ago(guild.created_at)}", inline=False)
 		
-		except Exception as e:
-			await ctx.send(f"error: {e}")
+		await ctx.send(embed=embed)
 
 	# info user
 	@info.command(name="user", help="info on specified user")
 	async def user(self, ctx, user: discord.User = None):
-		try:
-			user = user or ctx.author # default to command initiator if not user given
-			member = ctx.guild.get_member(user.id)
-			embed = discord.Embed(
-				title=f"{user.name} ({user.display_name})",
-				color=default_color,
-			)
+		user = user or ctx.author # default to command initiator if not user given
+		member = ctx.guild.get_member(user.id)
+		embed = discord.Embed(
+			title=f"{user.name} ({user.display_name})",
+			color=default_color,
+		)
 
-			embed.set_thumbnail(url=user.avatar.url if user.avatar else user.default_avatar.url)
-			# embed.add_field(name="top role", value=f"{member.top_role}")
-			embed.add_field(name="roles", value=f"{len(member.roles)}")
-			embed.add_field(name="joined on", value=f"{format_date_with_suffix(member.joined_at)}\n-# {time_ago(member.joined_at)}", inline=False)
-			embed.add_field(name=f"created on", value=f"{format_date_with_suffix(user.created_at)}\n-# {time_ago(user.created_at)}", inline=False)
+		embed.set_thumbnail(url=user.avatar.url if user.avatar else user.default_avatar.url)
+		# embed.add_field(name="top role", value=f"{member.top_role}")
+		embed.add_field(name="roles", value=f"{len(member.roles)}")
+		embed.add_field(name="joined on", value=f"{format_date_with_suffix(member.joined_at)}\n-# {time_ago(member.joined_at)}", inline=False)
+		embed.add_field(name=f"created on", value=f"{format_date_with_suffix(user.created_at)}\n-# {time_ago(user.created_at)}", inline=False)
 
-			await ctx.send(embed=embed)
-
-		except Exception as e:
-			await ctx.send(f"error: {e}")
+		await ctx.send(embed=embed)
 
 async def setup(bot):
 	await bot.add_cog(info(bot))

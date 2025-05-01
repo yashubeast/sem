@@ -98,81 +98,76 @@ class general(commands.Cog):
 	# help
 	@commands.hybrid_command(name="help", help="wikipedia of bot", with_app_command=True)
 	async def help(self, ctx, *,search: str = None):
-		try:
-			if not search:
-				cog = self.bot.get_cog("general") # initial cog to start the message with
-				if cog:
-					commands_list = cog.get_commands()
-
-					help_text = format_commands(commands_list)
-					embed = discord.Embed(
-						title=f"{cog.qualified_name} commands",
-						description=f"```{help_text}```",
-						color=default_color
-					)
-					await ctx.send(embed=embed, view=helpview(self.bot), ephemeral=True)
-				else:
-					await ctx.send("contact admin (command broke lmfao)")
-				return
-
-			if search == "*":
-				embed = discord.Embed(
-					title="wikipedia",
-					color=default_color
-				)
-				for i in self.bot.cogs:
-					cog = self.bot.get_cog(i)
-					commands_list= cog.get_commands()
-					
-					help_text = format_commands(commands_list)
-					embed.add_field(
-						name=cog.qualified_name, value=f"```{help_text}```", inline=False
-					)
-				await ctx.send(embed=embed, ephemeral=True)
-				return
-
-			# check for cog
-			cog = self.bot.get_cog(search.lower())
+		if not search:
+			cog = self.bot.get_cog("general") # initial cog to start the message with
 			if cog:
 				commands_list = cog.get_commands()
-				
+
 				help_text = format_commands(commands_list)
 				embed = discord.Embed(
 					title=f"{cog.qualified_name} commands",
 					description=f"```{help_text}```",
 					color=default_color
 				)
+				await ctx.send(embed=embed, view=helpview(self.bot), ephemeral=True)
+			else:
+				await ctx.send("contact admin (command broke lmfao)")
+			return
+
+		if search == "*":
+			embed = discord.Embed(
+				title="wikipedia",
+				color=default_color
+			)
+			for i in self.bot.cogs:
+				cog = self.bot.get_cog(i)
+				commands_list= cog.get_commands()
+				
+				help_text = format_commands(commands_list)
+				embed.add_field(
+					name=cog.qualified_name, value=f"```{help_text}```", inline=False
+				)
+			await ctx.send(embed=embed, ephemeral=True)
+			return
+
+		# check for cog
+		cog = self.bot.get_cog(search.lower())
+		if cog:
+			commands_list = cog.get_commands()
+			
+			help_text = format_commands(commands_list)
+			embed = discord.Embed(
+				title=f"{cog.qualified_name} commands",
+				description=f"```{help_text}```",
+				color=default_color
+			)
+			await ctx.send(embed=embed)
+			return
+
+		# check for command
+		path_parts = search.split()
+		for cog_name in self.bot.cogs:
+			cog = self.bot.get_cog(cog_name)
+			if not cog:
+				continue
+			found_command = resolve_command_path(cog.get_commands(), path_parts)
+			if found_command:
+				if isinstance(found_command, commands.Group):
+					help_text = format_commands(found_command.commands)
+					description = (found_command.help or '') + f"\n```{help_text}```"
+				else:
+					# normal command
+					description = found_command.help or "no description"
+
+				embed = discord.Embed(
+					title=" ".join(path_parts),
+					description=description,
+					color=default_color
+				)
 				await ctx.send(embed=embed)
 				return
 
-			# check for command
-			path_parts = search.split()
-			for cog_name in self.bot.cogs:
-				cog = self.bot.get_cog(cog_name)
-				if not cog:
-					continue
-				found_command = resolve_command_path(cog.get_commands(), path_parts)
-				if found_command:
-					if isinstance(found_command, commands.Group):
-						help_text = format_commands(found_command.commands)
-						description = (found_command.help or '') + f"\n```{help_text}```"
-					else:
-						# normal command
-						description = found_command.help or "no description"
-
-					embed = discord.Embed(
-						title=" ".join(path_parts),
-						description=description,
-						color=default_color
-					)
-					await ctx.send(embed=embed)
-					return
-
-			await ctx.send(f"no command or category named `{search}` found")
-
-		except Exception as e:
-			await ctx.send(f"error: {str(e)}")
+		await ctx.send(f"no command or category named `{search}` found")
 
 async def setup(bot):
-
 	await bot.add_cog(general(bot))

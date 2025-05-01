@@ -85,7 +85,7 @@ class sticky(commands.Cog):
 			json_save(data)
 	
 		except Exception as e:
-			await message.channel.send(f"error: {e}")
+			raise Exception(f"{e}")
 
 		finally:
 			active_channels.discard(channel_id)
@@ -122,9 +122,6 @@ class sticky(commands.Cog):
 			}
 			json_save(data)
 
-		except Exception as e:
-			await ctx.send(f"error: {e}")
-		
 		finally:
 			working_channels.discard(channel_id)
 
@@ -158,9 +155,6 @@ class sticky(commands.Cog):
 			json_save(data)
 
 			await ctx.send("sticky message removed\n-# deleting...", delete_after=5)
-
-		except Exception as e:
-			await ctx.send(f"error: {e}")
 
 		finally:
 			working_channels.discard(channel_id)

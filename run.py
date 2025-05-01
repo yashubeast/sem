@@ -40,7 +40,9 @@ async def on_command_error(ctx, error):
 	if isinstance(error, commands.MissingPermissions):
 		await ctx.send("your aah lacks perms to use this cmd")
 	elif isinstance(error, commands.MissingRequiredArgument):
-		await ctx.send("missing a required arg\n-# deleting..", delete_after=3)
+		await ctx.send(">>> missing a required arg\n-# deleting..", delete_after=3)
+	elif isinstance(error, commands.BotMissingPermissions):
+		await ctx.send("i lack perms for ts :wilted:")
 	elif isinstance(error, commands.CommandNotFound):
 		return
 	else:

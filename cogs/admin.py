@@ -15,51 +15,37 @@ class admin(commands.Cog):
 		await ctx.reply(error, ephemeral = True)
 
 	# sync cmd
-	@commands.hybrid_command(
-			name="sync",
-			help="sync app commands",
-			with_app_command=True
-	)
+	@commands.hybrid_command(name="sync", help="sync app commands", with_app_command=True)
 	@app_commands.describe(query="target of the sync: global or guild")
 	@commands.has_permissions(administrator=True)
 	async def sync(self, ctx:Context, query: str = "guild") -> None:
-
-		try:
-			if query == "global":
-				await ctx.bot.tree.sync()
-				await ctx.send("slash commands globally synchronized")
-				return
-			elif query == "guild":
-				ctx.bot.tree.copy_global_to(guild=ctx.guild)
-				await ctx.bot.tree.sync(guild=ctx.guild)
-				await ctx.send("slash commands synchronized in current server")
-				return
-			await ctx.send("query must be global or guild", ephemeral=True)
-
-		except Exception as e:
-			await ctx.send(f"error: {e}")
+		if query == "global":
+			await ctx.bot.tree.sync()
+			await ctx.send("slash commands globally synchronized")
+			return
+		elif query == "guild":
+			ctx.bot.tree.copy_global_to(guild=ctx.guild)
+			await ctx.bot.tree.sync(guild=ctx.guild)
+			await ctx.send("slash commands synchronized in current server")
+			return
+		await ctx.send("query must be global or guild", ephemeral=True)
 
 	# unsync
 	@commands.command(name="unsync", help="unsync app commands")
 	@app_commands.describe(scope="target of the sync: global or guild")
 	@commands.has_permissions(administrator=True)
 	async def unsync(self, ctx: Context, query: str = "guild") -> None:
-
-		try:
-			if query == "global":
-				ctx.bot.tree.clear_commands(guild=None)
-				await ctx.bot.tree.sync()
-				await ctx.send("slash commands globally unsynchronized")
-				return
-			elif query == "guild":
-				ctx.bot.tree.clear_commands(guild=ctx.guild)
-				await ctx.bot.tree.sync(guild=ctx.guild)
-				await ctx.send("slash commands unsynchronized in current server")
-				return
-			await ctx.send("query must be global or guild")
-		
-		except Exception as e:
-			await ctx.send(f"error: {e}")
+		if query == "global":
+			ctx.bot.tree.clear_commands(guild=None)
+			await ctx.bot.tree.sync()
+			await ctx.send("slash commands globally unsynchronized")
+			return
+		elif query == "guild":
+			ctx.bot.tree.clear_commands(guild=ctx.guild)
+			await ctx.bot.tree.sync(guild=ctx.guild)
+			await ctx.send("slash commands unsynchronized in current server")
+			return
+		await ctx.send("query must be global or guild")
 
 	# say cmd
 	@commands.hybrid_command(name="say", help="make bot send a message")

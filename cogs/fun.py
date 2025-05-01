@@ -30,7 +30,7 @@ class fun(commands.Cog):
 	async def coinflip(self, ctx: Context) -> None:
 		buttons = coinflip()
 		embed = discord.Embed(
-			description="What is your bet ?",
+			description="what is your bet ?",
 			color=0xBEBEFE			
 		)
 		message = await ctx.send(embed=embed, view=buttons)
@@ -38,7 +38,7 @@ class fun(commands.Cog):
 		result = random.choice(["heads", "tails"])
 		if buttons.value == result:
 			embed = discord.Embed(
-				description=f"Correct! You guessed `{buttons.value}` and i flipped the coin to `{result}`.",
+				description=f"correct! You guessed `{buttons.value}` and i flipped the coin to `{result}`.",
 				color=0xBEBEFE
 			)
 		else:

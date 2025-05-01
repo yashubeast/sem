@@ -32,27 +32,23 @@ class server(commands.Cog):
 	@server.command(name="add", aliases=["a"], help="add a new server")
 	@app_commands.describe(name="server name", message="full message to store")
 	async def add(self, ctx: Context, name: str, *, message: str):
-		try:
-			# load json
-			data = json_load()
+		# load json
+		data = json_load()
 
-			servers_list = data.get("servers_list", [])
+		servers_list = data.get("servers_list", [])
 
-			server_name = name.lower()
+		server_name = name.lower()
 
-			if not server_name.strip():
-				return await ctx.send("server name cannot be empty")
+		if not server_name.strip():
+			return await ctx.send("server name cannot be empty")
 
-			servers_list.append({server_name: message})
+		servers_list.append({server_name: message})
 
-			# save json
-			data["servers_list"] = servers_list
-			json_save(data)
+		# save json
+		data["servers_list"] = servers_list
+		json_save(data)
 
-			await ctx.send(f"server `{server_name}` added")
-
-		except Exception as e:
-			await ctx.send(f"error: {e}")
+		await ctx.send(f"server `{server_name}` added")
 
 	# server delete
 	@server.command(name="delete", aliases=["d", "del"], help="delete a server")
@@ -79,11 +75,9 @@ class server(commands.Cog):
 			await ctx.send(f"server `{server}` deleted")
 
 		except FileNotFoundError:
-			await ctx.send("server data fiel not found")
+			await ctx.send("server data file not found")
 		except json.JSONDecodeError:
 			await ctx.send("error reading the server data file")
-		except Exception as e:
-			return await ctx.send(f"error: {e}")
 
 	# server list
 	@server.command(name="list", alises=["l"], help="list all servers")
@@ -119,35 +113,29 @@ class server(commands.Cog):
 			await ctx.send("server data fiel not found.")
 		except json.JSONDecodeError:
 			await ctx.send("error reading the server data file.")
-		except Exception as e:
-			return await ctx.send(f"error: {e}")
 
 	# server nuke
 	@server.command(name="nuke", help="nukes data")
 	@app_commands.describe(target="options: servers, messages(msgs)")
 	async def nuke(self, ctx, target: str):
-		try:
-			target = target.lower()
+		target = target.lower()
 
-			if target not in ["servers", "messages", "msgs"]:
-				await ctx.send("invalid target")
-				return
+		if target not in ["servers", "messages", "msgs"]:
+			await ctx.send("invalid target")
+			return
 
-			# load json
-			data = json_load()
-			
-			if target == "servers":
-				data["servers_list"] = []
-			elif target in ["messages", "msgs"]:
-				data ["messages_list"] = []
-
-			# save json
-			json_save(data)
-
-			await ctx.send(f"nuked `{target}`")
+		# load json
+		data = json_load()
 		
-		except Exception as e:
-			await ctx.send(f"error: {e}")
+		if target == "servers":
+			data["servers_list"] = []
+		elif target in ["messages", "msgs"]:
+			data ["messages_list"] = []
+
+		# save json
+		json_save(data)
+
+		await ctx.send(f"nuked `{target}`")
 
 	# server initiate, send all the server messages
 	@server.command(name="initiate", aliases=["i"], help="initiate all server")
@@ -202,10 +190,6 @@ class server(commands.Cog):
 				json_save(data)
 				
 				continue
-
-			# error handling
-			except Exception as e:
-				await ctx.send(f"error handling server `{server_name}`: {e}")
 			
 			idx += 1
 			
@@ -227,7 +211,6 @@ class server(commands.Cog):
 	# server move up
 	@move.command(name="up", alises=["u"], help="move up by X amount")
 	async def up(self, ctx, name : str, amount: int):
-
 		# load json
 		data = json_load()
 
@@ -284,115 +267,103 @@ class server(commands.Cog):
 	# server move to
 	@move.command(name="to", aliases=["t"], help="move to Xth position")
 	async def to(self, ctx, name: str, index: int):
-		try:
-			# load json
-			data = json_load()
+		# load json
+		data = json_load()
 
-			servers_list = data.get("servers_list", [])
+		servers_list = data.get("servers_list", [])
 
-			# find the index
-			current_index = next((i for i, server in enumerate(servers_list) if name.lower() in (key.lower() for key in server)), None)
+		# find the index
+		current_index = next((i for i, server in enumerate(servers_list) if name.lower() in (key.lower() for key in server)), None)
 
-			if current_index is None:
-				await ctx.send(f"server `{name}` doesn't exist")
-				return
+		if current_index is None:
+			await ctx.send(f"server `{name}` doesn't exist")
+			return
 
-			# ensuring target index is within bounds
-			target_index = max(0, min(index -1, len(servers_list) -1))
+		# ensuring target index is within bounds
+		target_index = max(0, min(index -1, len(servers_list) -1))
 
-			# move server
-			server = servers_list.pop(current_index)
-			servers_list.insert(target_index, server)
+		# move server
+		server = servers_list.pop(current_index)
+		servers_list.insert(target_index, server)
 
-			# save json
-			data["servers_list"] = servers_list
-			json_save(data)
+		# save json
+		data["servers_list"] = servers_list
+		json_save(data)
 
-			await ctx.send(f"server `{name}` moved to position `{index}`")
-		
-		except Exception as e:
-			await ctx.send(f"error: {e}")
+		await ctx.send(f"server `{name}` moved to position `{index}`")
 
 	# server move above
 	@move.command(name="above", aliases=["a"], help="move above another server")
 	async def above(self, ctx, name: str, above_name: str):
-		try:
-			# load json
-			data = json_load()
+		# load json
+		data = json_load()
 
-			servers_list = data.get("servers_list", [])
+		servers_list = data.get("servers_list", [])
 
-			# find indices
-			moving_index = next((i for i, server in enumerate(servers_list) if name.lower() in (key.lower() for key in server)), None)
-			target_index = next((i for i, server in enumerate(servers_list) if above_name.lower() in (key.lower() for key in server)), None)
+		# find indices
+		moving_index = next((i for i, server in enumerate(servers_list) if name.lower() in (key.lower() for key in server)), None)
+		target_index = next((i for i, server in enumerate(servers_list) if above_name.lower() in (key.lower() for key in server)), None)
 
-			if moving_index is None:
-				await ctx.send(f"server `{name}` doesn't exist")
-				return
+		if moving_index is None:
+			await ctx.send(f"server `{name}` doesn't exist")
+			return
 
-			if target_index is None:
-				await ctx.send(f"server `{above_name}` doesn't exist")
-				return
+		if target_index is None:
+			await ctx.send(f"server `{above_name}` doesn't exist")
+			return
 
-			# remove moving server
-			server = servers_list.pop(moving_index)
+		# remove moving server
+		server = servers_list.pop(moving_index)
 
-			# adjust target_index if necessary
-			if moving_index < target_index:
-				target_index -= 1
+		# adjust target_index if necessary
+		if moving_index < target_index:
+			target_index -= 1
 
-			# insert moving server above target
-			servers_list.insert(target_index, server)
+		# insert moving server above target
+		servers_list.insert(target_index, server)
 
-			# save json
-			data["servers_list"] = servers_list
-			json_save(data)
+		# save json
+		data["servers_list"] = servers_list
+		json_save(data)
 
-			await ctx.send(f"moved `{name}` above `{above_name}`")
+		await ctx.send(f"moved `{name}` above `{above_name}`")
 			
-		except Exception as e:
-			await ctx.send(f"error: {e}")
-
 	# server move below
 	@move.command(name="below", aliases=["b"], help="move below another server")
 	async def below(self, ctx, name: str, below_name: str):
-		try:
-			# load json
-			data = json_load()
+		# load json
+		data = json_load()
 
-			servers_list = data.get("servers_list", [])
+		servers_list = data.get("servers_list", [])
 
-			# find indices
-			moving_index = next((i for i, server in enumerate(servers_list) if name.lower() in (key.lower() for key in server)), None)
-			target_index = next((i for i, server in enumerate(servers_list) if below_name.lower() in (key.lower() for key in server)), None)
+		# find indices
+		moving_index = next((i for i, server in enumerate(servers_list) if name.lower() in (key.lower() for key in server)), None)
+		target_index = next((i for i, server in enumerate(servers_list) if below_name.lower() in (key.lower() for key in server)), None)
 
-			if moving_index is None:
-				await ctx.send(f"server `{name}` doesn't exist")
-				return
+		if moving_index is None:
+			await ctx.send(f"server `{name}` doesn't exist")
+			return
 
-			if target_index is None:
-				await ctx.send(f"server `{below_name}` doesn't exist")
-				return
+		if target_index is None:
+			await ctx.send(f"server `{below_name}` doesn't exist")
+			return
 
-			# remove moving server
-			server = servers_list.pop(moving_index)
+		# remove moving server
+		server = servers_list.pop(moving_index)
 
-			# adjust target_index if necessary
-			if moving_index < target_index:
-				target_index -= 1
+		# adjust target_index if necessary
+		if moving_index < target_index:
+			target_index -= 1
 
-			# insert moving server below target
-			servers_list.insert(target_index + 1, server)
+		# insert moving server below target
+		servers_list.insert(target_index + 1, server)
 
-			# save json
-			data["servers_list"] = servers_list
-			json_save(data)
+		# save json
+		data["servers_list"] = servers_list
+		json_save(data)
 
-			await ctx.send(f"moved `{name}` below `{below_name}`")
+		await ctx.send(f"moved `{name}` below `{below_name}`")
 			
-		except Exception as e:
-			await ctx.send(f"error: {e}")
-
 	# server import (group)
 	@server.group(name="import", help="import messages as server")
 	async def ximport(self, ctx):
@@ -402,93 +373,85 @@ class server(commands.Cog):
 	# server import as
 	@ximport.command(name="as", help="import replied message as a server message")
 	async def xas(self, ctx, *, name: str, message_id: str = None):
-		try:
-			if ctx.interaction is None:
-				if ctx.message.reference:
-					replied_message_id = ctx.message.reference.message_id
-					replied_message = await ctx.channel.fetch_message(replied_message_id)
-					server_content = replied_message.content
+		if ctx.interaction is None:
+			if ctx.message.reference:
+				replied_message_id = ctx.message.reference.message_id
+				replied_message = await ctx.channel.fetch_message(replied_message_id)
+				server_content = replied_message.content
 
-					# load json
-					data = json_load()
-					
-					servers_list = data.get("servers_list", [])
-					servers_list.append({name: server_content})
+				# load json
+				data = json_load()
+				
+				servers_list = data.get("servers_list", [])
+				servers_list.append({name: server_content})
 
-					# save json
-					data["servers_list"] = servers_list
-					json_save(data)
-					
-					await ctx.send(f"server `{name}` imported")
-				else:
-					await ctx.send("you need to reply to a message")
+				# save json
+				data["servers_list"] = servers_list
+				json_save(data)
+				
+				await ctx.send(f"server `{name}` imported")
 			else:
-				if message_id:
-					app_replied_message_id = int(message_id)
-					app_replied_message = await ctx.channel.fetch_message(app_replied_message_id)
-					app_server_content = app_replied_message.content
+				await ctx.send("you need to reply to a message")
+		else:
+			if message_id:
+				app_replied_message_id = int(message_id)
+				app_replied_message = await ctx.channel.fetch_message(app_replied_message_id)
+				app_server_content = app_replied_message.content
 
-					# load json
-					data = json_load()
-					
-					servers_list = data.get("servers_list", [])
-					servers_list.append({name: app_server_content})
+				# load json
+				data = json_load()
+				
+				servers_list = data.get("servers_list", [])
+				servers_list.append({name: app_server_content})
 
-					# save json
-					data["servers_list"] = servers_list
-					json_save(data)
-					
-					await ctx.send(f"server `{name}` imported")
-				else:
-					await ctx.send("please provide a message id for importing")
-
-		except Exception as e:
-			await ctx.send(f"error: {str(e)}")
+				# save json
+				data["servers_list"] = servers_list
+				json_save(data)
+				
+				await ctx.send(f"server `{name}` imported")
+			else:
+				await ctx.send("please provide a message id for importing")
 
 	# server import bulk
 	@ximport.command(name="bulk", help="bulk import server messages using range")
 	async def bulk(self, ctx, from_id: str, to_id: str, user: discord.User = None, exclude: str = None):
-		try:
-			collected_messages = []
-			found_from = False
+		collected_messages = []
+		found_from = False
 
-			async for message in ctx.channel.history(limit=None, oldest_first=False):
-				if user and message.author.id != user.id:
-					continue
+		async for message in ctx.channel.history(limit=None, oldest_first=False):
+			if user and message.author.id != user.id:
+				continue
 
-				if exclude and exclude in message.content:
-					continue
+			if exclude and exclude in message.content:
+				continue
 
-				if not found_from:
-					if message.id == int(from_id):
-						found_from = True
-						collected_messages.append(message)
-				else:
+			if not found_from:
+				if message.id == int(from_id):
+					found_from = True
 					collected_messages.append(message)
-					if message.id == int(to_id):
-						break
+			else:
+				collected_messages.append(message)
+				if message.id == int(to_id):
+					break
 
-			if not collected_messages:
-				await ctx.send("no messages collected")
-				return
+		if not collected_messages:
+			await ctx.send("no messages collected")
+			return
 
-			# load json
-			data = json_load()
+		# load json
+		data = json_load()
 
-			servers_list = data.get("servers_list", [])
+		servers_list = data.get("servers_list", [])
 
-			# add collected message to list
-			for msg in reversed(collected_messages):
-				servers_list.append({f"{msg.id}": msg.content})
+		# add collected message to list
+		for msg in reversed(collected_messages):
+			servers_list.append({f"{msg.id}": msg.content})
 
-			# save json
-			data["servers_list"] = servers_list
-			json_save(data)
+		# save json
+		data["servers_list"] = servers_list
+		json_save(data)
 
-			await ctx.send(f"successfully imported {len(collected_messages)} messages")
-
-		except Exception as e:
-			await ctx.send(f"error: {str(e)}")
+		await ctx.send(f"successfully imported {len(collected_messages)} messages")
 
 	# visible cmd
 	# @commands.hybrid_command(name="server_visibility", aliases=["sv"], help="toggle visibility of server", with_app_command=True)
