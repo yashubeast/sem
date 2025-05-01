@@ -1,4 +1,4 @@
-import discord
+import discord, asyncio
 from discord.ext import commands
 from discord.ext.commands import Context
 from discord import app_commands
@@ -61,6 +61,7 @@ class info(commands.Cog):
 
 	# info user
 	@info.command(name="user", help="info on specified user")
+	@app_commands.describe(user="user to look info on, provide any one: mention, user_id, display name, nickname, unique name")
 	async def user(self, ctx, user: discord.User = None):
 		user = user or ctx.author # default to command initiator if not user given
 		member = ctx.guild.get_member(user.id)
@@ -71,11 +72,42 @@ class info(commands.Cog):
 
 		embed.set_thumbnail(url=user.avatar.url if user.avatar else user.default_avatar.url)
 		# embed.add_field(name="top role", value=f"{member.top_role}")
-		embed.add_field(name="roles", value=f"{len(member.roles)}")
-		embed.add_field(name="joined on", value=f"{format_date_with_suffix(member.joined_at)}\n-# {time_ago(member.joined_at)}", inline=False)
-		embed.add_field(name=f"created on", value=f"{format_date_with_suffix(user.created_at)}\n-# {time_ago(user.created_at)}", inline=False)
+		embed.add_field(name="roles", value=f"{len(member.roles)}", inline=False)
+		embed.add_field(name="joined on", value=f"{format_date_with_suffix(member.joined_at)}\n-# {time_ago(member.joined_at)}")
+		embed.add_field(name=f"created on", value=f"{format_date_with_suffix(user.created_at)}\n-# {time_ago(user.created_at)}")
 
 		await ctx.send(embed=embed)
+
+	# test command
+	@commands.command(name="test")
+	@commands.has_permissions(administrator=True)
+	async def test(self, ctx, user: discord.User, channel:discord.TextChannel = None):
+		await ctx.message.delete()
+		channel = channel or ctx.channel
+
+		await ctx.send(f"counting messages from {user.mention} in {channel.mention}... might take a while")
+
+		count = 0
+		checked = 0
+
+		try:
+			async for message in channel.history(limit=None, oldest_first=True):
+				checked += 1
+				if message.author.id == user.id:
+					count += 1
+
+				print(f"checked {checked} msgs, found {count}")
+
+				await asyncio.sleep(0.01)
+
+		except discord.Forbidden:
+			await ctx.send("missing `read message history` permission")
+			return
+		except discord.HTTPException as e:
+			await ctx.send(f"hit the rate limit lmfao: ```py\n{e}```")
+			return
+		
+		await ctx.send(f"{user.mention} has **{count}** messages in {channel.mention}")
 
 async def setup(bot):
 	await bot.add_cog(info(bot))

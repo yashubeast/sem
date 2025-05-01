@@ -95,7 +95,7 @@ class server(commands.Cog):
 
 	# server show
 	@server.command(name="show", aliases=["s"], help="previews a server message")
-	@app_commands.describe(server="name of the server to send")
+	@app_commands.describe(server="name of the server to show")
 	async def show(self, ctx, *,server: str):
 		try:
 			data = json_load()
@@ -210,6 +210,7 @@ class server(commands.Cog):
 
 	# server move up
 	@move.command(name="up", alises=["u"], help="move up by X amount")
+	@app_commands.describe(name="server to move", amount="amount to move by")
 	async def up(self, ctx, name : str, amount: int):
 		# load json
 		data = json_load()
@@ -238,6 +239,7 @@ class server(commands.Cog):
 
 	# server move down
 	@move.command(name="down", aliases=["d"], help="move down by X amount")
+	@app_commands.describe(name="server to move", amount="amount to move by")
 	async def down(self, ctx, name: str, amount: int):
 		# load json
 		data = json_load()
@@ -266,6 +268,7 @@ class server(commands.Cog):
 
 	# server move to
 	@move.command(name="to", aliases=["t"], help="move to Xth position")
+	@app_commands.describe(name="server to move", index="position to move to")
 	async def to(self, ctx, name: str, index: int):
 		# load json
 		data = json_load()
@@ -294,6 +297,7 @@ class server(commands.Cog):
 
 	# server move above
 	@move.command(name="above", aliases=["a"], help="move above another server")
+	@app_commands.describe(name="server to move", amount="name of the server to move above")
 	async def above(self, ctx, name: str, above_name: str):
 		# load json
 		data = json_load()
@@ -330,6 +334,7 @@ class server(commands.Cog):
 			
 	# server move below
 	@move.command(name="below", aliases=["b"], help="move below another server")
+	@app_commands.describe(name="server to move", amount="name of the server to move below")
 	async def below(self, ctx, name: str, below_name: str):
 		# load json
 		data = json_load()
@@ -372,6 +377,7 @@ class server(commands.Cog):
 
 	# server import as
 	@ximport.command(name="as", help="import replied message as a server message")
+	@app_commands.describe(name="server to move", message_id="id of message to import")
 	async def xas(self, ctx, *, name: str, message_id: str = None):
 		if ctx.interaction is None:
 			if ctx.message.reference:
@@ -414,6 +420,7 @@ class server(commands.Cog):
 
 	# server import bulk
 	@ximport.command(name="bulk", help="bulk import server messages using range")
+	@app_commands.describe(from_id="bottom message_id of range", to_id="top message_id of range", user="specify user to look messages of", exclude="content to be excluded")
 	async def bulk(self, ctx, from_id: str, to_id: str, user: discord.User = None, exclude: str = None):
 		collected_messages = []
 		found_from = False

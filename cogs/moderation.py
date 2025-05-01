@@ -15,6 +15,7 @@ class mod(commands.Cog):
 	@commands.command(name="delete", aliases = ["d", "del"], help="purge messages")
 	@commands.has_permissions(manage_messages=True)
 	@commands.bot_has_permissions(manage_messages=True)
+	@app_commands.describe(amount="amount of messages to purge")
 	async def delete(self, cfx, amount: int = 1):
 		await cfx.channel.purge(limit=amount+1)
 

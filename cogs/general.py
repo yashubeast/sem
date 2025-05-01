@@ -97,6 +97,7 @@ class general(commands.Cog):
 	
 	# help
 	@commands.hybrid_command(name="help", help="wikipedia of bot", with_app_command=True)
+	@app_commands.describe(search="specify a category or a command to look up, or * for all commands in all categories")
 	async def help(self, ctx, *,search: str = None):
 		if not search:
 			cog = self.bot.get_cog("general") # initial cog to start the message with

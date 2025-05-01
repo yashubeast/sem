@@ -49,7 +49,7 @@ class admin(commands.Cog):
 
 	# say cmd
 	@commands.hybrid_command(name="say", help="make bot send a message")
-	@app_commands.describe(message="The message to be repeated by the bot")
+	@app_commands.describe(message="the content to be repeated by the bot")
 	@commands.has_permissions(administrator=True)
 	@commands.bot_has_permissions(manage_messages=True)
 	async def say(self, ctx:Context, *, message: str) -> None:
@@ -61,8 +61,8 @@ class admin(commands.Cog):
 	@app_commands.describe(
 		title="title of the embed",
 		description="description of the embed",
-		fields="dynamic fields as 'name&value' pairs separated by | (pipes)",
-		footer="Optional footer text",
+		fields="dynamic fields as 'name & value' pairs separated by | (pipes)",
+		footer="optional footer text",
 		color="hex color (example #f1e3e2)"
 	)
 	@commands.has_permissions(administrator=True)

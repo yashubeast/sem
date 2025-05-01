@@ -93,6 +93,7 @@ class sticky(commands.Cog):
 	# sticky create
 	@commands.command()
 	@commands.has_permissions(manage_messages=True)
+	@app_commands.describe(content="content of sticky message")
 	async def sticky(self, ctx, *, content: str):
 		try:
 			channel_id = str(ctx.channel.id)

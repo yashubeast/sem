@@ -10,7 +10,7 @@ with open("assets/config.json", "r") as f:
 bot = commands.Bot(command_prefix=config["main"]["prefix"], help_command=None, intents=discord.Intents.all())
 bot.config = config
 
-disabled_cogs = []
+disabled_cogs = ["template"]
 
 @bot.event
 async def on_ready():
