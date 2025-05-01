@@ -1,6 +1,7 @@
 import discord, os, asyncio, json
 from discord.ext import commands
 from dotenv import load_dotenv
+from utils.cog_handler import *
 
 load_dotenv()
 
@@ -9,8 +10,6 @@ with open("assets/config.json", "r") as f:
 
 bot = commands.Bot(command_prefix=config["main"]["prefix"], help_command=None, intents=discord.Intents.all())
 bot.config = config
-
-disabled_cogs = ["template"]
 
 @bot.event
 async def on_ready():
@@ -48,16 +47,9 @@ async def on_command_error(ctx, error):
 	else:
 		await ctx.send(f":warning: error :warning: contact yasu ```py\n{error}```")
 
-async def load():
-	for filename in os.listdir("./cogs"):
-		if filename.endswith(".py"):
-			cog_name = filename[:-3]
-			if cog_name not in disabled_cogs:
-				await bot.load_extension(f"cogs.{cog_name}")
-
 async def main():
 	async with bot:
-		await load()
+		await load_all_cogs(bot)
 		await bot.start(os.getenv("TOKEN"))
 
 asyncio.run(main())
