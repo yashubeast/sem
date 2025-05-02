@@ -29,7 +29,7 @@ class server(commands.Cog):
 			pass
 
 	# server add
-	@server.command(name="add", aliases=["a"], help="add a new server")
+	@server.command(name="add", aliases=["a"], help="add/edit a server")
 	@app_commands.describe(name="server name", message="full message to store")
 	async def add(self, ctx: Context, name: str, *, message: str):
 		# load json
@@ -37,18 +37,27 @@ class server(commands.Cog):
 
 		servers_list = data.get("servers_list", [])
 
-		server_name = name.lower()
+		server_name = name.lower().strip
 
-		if not server_name.strip():
+		if not server_name:
 			return await ctx.send("server name cannot be empty")
 
-		servers_list.append({server_name: message})
+		# check if server already exists
+		updated = False
+		for server in servers_list:
+			if server_name == server:
+				server[server_name] = message
+				update = True
+				break
+
+		if not updated:
+			servers_list.append({server_name: message})
 
 		# save json
 		data["servers_list"] = servers_list
 		json_save(data)
 
-		await ctx.send(f"server `{server_name}` added")
+		await ctx.send(f"server `{server_name}` {'updated' if updated else 'added'}")
 
 	# server delete
 	@server.command(name="delete", aliases=["d", "del"], help="delete a server")
