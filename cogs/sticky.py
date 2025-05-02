@@ -1,17 +1,25 @@
-import discord, json, time
+import discord, json, time, os
 from discord.ext import commands
 # from discord.ext.commands import Context
 from discord import app_commands
 
-json_file_path = "assets/servers.json"
+json_file_path = "assets/sticky.json"
 active_channels = set()
 working_channels = set()
 
+def ensure_json():
+	os.makedirs(os.path.dirname(json_file_path), exist_ok=True)
+	if not os.path.isfile(json_file_path):
+		with open(json_file_path, "w", encoding="utf-8") as f:
+			json.dump({"sticky": {}}, f, indent=4)
+
 def json_load():
+	ensure_json()
 	with open(json_file_path, "r", encoding="utf-8") as f:
 		return json.load(f)
 
 def json_save(data):
+	ensure_json()
 	with open(json_file_path, "w", encoding="utf-8") as f:
 		json.dump(data, f, indent=4)
 
