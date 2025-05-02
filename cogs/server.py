@@ -186,6 +186,7 @@ class server(commands.Cog):
 		
 		edited = 0
 		added = 0
+		msgs_deleted = 0
 		idx = 0
 
 		while idx < len(server_names):
@@ -226,14 +227,27 @@ class server(commands.Cog):
 			
 			idx += 1
 			
+		# remove useless messages
+		if len(messages_list) > len(server_names):
+			excess_ids = messages_list[len(server_names):]
+			for msg_id in excess_ids:
+				try:
+					message = await ctx.channel.fetch_message(int(msg_id))
+					await message.delete()
+					msgs_deleted += 1
+				except discord.NotFound:
+					pass
+			
+			messages_list = messages_list[:len(server_names)]
+
 		# save json
 		data["messages_list"] = messages_list
 		json_save(data)
 		
-		# if edited == 0 and added == 0:
-		# 	await ctx.send("No changes made.\n-# auto deleting...", delete_after=7)
-		# else:
-		# 	await ctx.send(f"{added} servers added\n{edited} servers edited\n-# auto deleting...", delete_after=7)
+		if edited == 0 and added == 0 and msgs_deleted == 0:
+			await ctx.send("no changes made\n-# auto deleting...", delete_after=7)
+		else:
+			await ctx.send(f"{added} servers added\n{edited} servers edited\n{msgs_deleted} server msgs deleted")
 
 	# server move (group)
 	@server.group(aliases=["m"], help="repositioning commands for servers")
