@@ -98,11 +98,17 @@ class sticky(commands.Cog):
 		finally:
 			active_channels.discard(channel_id)
 
-	# sticky create
-	@commands.command()
+	# sticky (group)
+	@commands.hybrid_group(help="sticky message commands")
 	@commands.has_permissions(manage_messages=True)
+	async def sticky(eslf, ctx):
+		if ctx.invoked_subcommand is None:
+			pass
+
+	# sticky create/edit
+	@sticky.command(name="create", aliases=["c"], help="new sticky message, or overwrite existing one")
 	@app_commands.describe(content="content of sticky message")
-	async def sticky(self, ctx, *, content: str):
+	async def create(self, ctx, *, content: str):
 		try:
 			channel_id = str(ctx.channel.id)
 
@@ -134,10 +140,9 @@ class sticky(commands.Cog):
 		finally:
 			working_channels.discard(channel_id)
 
-	# sticky delete
-	@commands.command()
-	@commands.has_permissions(manage_messages=True)
-	async def unsticky(self, ctx):
+	# sticky remove
+	@sticky.command(name="remove", help="remove sticky message in current channel")
+	async def remove(self, ctx):
 		try:
 			channel_id = str(ctx.channel.id)
 			working_channels.add(channel_id)
