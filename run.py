@@ -1,4 +1,4 @@
-import discord, os, asyncio, json
+import discord, os, asyncio
 from discord.ext import commands
 from dotenv import load_dotenv
 from utils.cog_handler import load_all_cogs
