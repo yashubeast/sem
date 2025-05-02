@@ -1,4 +1,4 @@
-import discord, json, os
+import discord, json, os, asyncio
 from discord.ext import commands
 from discord.ext.commands import Context
 from discord import app_commands
@@ -12,10 +12,12 @@ def ensure_json():
 			json.dump({"servers_list": [], "messages_list": []}, f, indent=4)
 
 def json_load():
+	ensure_json()
 	with open(json_file_path, "r", encoding="utf-8") as f:
 		return json.load(f)
 
 def json_save(data):
+	ensure_json()
 	with open(json_file_path, "w", encoding="utf-8") as f:
 		json.dump(data, f, indent=4)
 
@@ -132,26 +134,29 @@ class server(commands.Cog):
 
 	# server nuke
 	@server.command(name="nuke", help="nukes data")
-	@app_commands.describe(target="options: servers, messages(msgs)")
+	@app_commands.describe(target="options: servers, messages(msgs) or * for both")
 	async def nuke(self, ctx, target: str):
 		target = target.lower()
 
-		if target not in ["servers", "messages", "msgs"]:
-			await ctx.send("invalid target, servers \ messages (msgs)")
+		if target not in ["servers", "messages", "msgs", "*"]:
+			await ctx.send("invalid target, servers \ messages (msgs) or * for all")
 			return
 
 		# load json
 		data = json_load()
 		
-		if target == "servers":
+		if target == "*":
 			data["servers_list"] = []
-		elif target in ["messages", "msgs"]:
-			data ["messages_list"] = []
+			data["messages_list"] = []
+		elif target == "servers":
+			data["servers_list"] = []
+		elif target in["messages", "msgs"]:
+			data["messages_list"] = []
 
 		# save json
 		json_save(data)
 
-		await ctx.send(f"nuked `{target}`")
+		await ctx.send(f"nuked `{'all' if target == '*' else target}`")
 
 	# server initiate, send all the server messages
 	@server.command(name="initiate", aliases=["i"], help="initiate/update all server messages")
@@ -439,6 +444,7 @@ class server(commands.Cog):
 	@app_commands.describe(from_id="bottom message_id of range", to_id="top message_id of range", user="specify user to look messages of", exclude="content to be excluded")
 	async def bulk(self, ctx, from_id: str, to_id: str, user: discord.User = None, exclude: str = None):
 		collected_messages = []
+		final_messages = []
 		found_from = False
 
 		async for message in ctx.channel.history(limit=None, oldest_first=False):
@@ -462,20 +468,45 @@ class server(commands.Cog):
 			await ctx.send("no server messages imported")
 			return
 
+		naming_msg = await ctx.send("starting bulk naming..")
+
+		for msg in reversed(collected_messages):
+			await naming_msg.edit(content=f"{msg.content}")
+
+			def check(m):
+				return m.author == ctx.author and m.channel == ctx.channel
+		
+			try:
+				reply = await self.bot.wait_for("message", check=check, timeout=60)
+				final_messages.append({reply.content: msg.content})
+				await reply.delete()
+			except asyncio.TimeoutError:
+				await ctx.send("timed out waiting for name response, importing terminated")
+				return
+
 		# load json
 		data = json_load()
 
-		servers_list = data.get("servers_list", [])
+		servers_list = data.setdefault("servers_list", [])
+
+		# check for duplicates
+
+		# flatten existing lsit into a dict
+		merged = {list(entry.keys())[0]: list(entry.values())[0] for entry in servers_list}
+
+		# add/replace with final_messages
+		for entry in final_messages:
+			key = list(entry.keys())[0]
+			value = list(entry.values())[0]
+			merged[key] = value
 
 		# add collected message to list
-		for msg in reversed(collected_messages):
-			servers_list.append({f"{msg.id}": msg.content})
+		data["servers_list"] = [{k: v} for k, v in merged.items()]
 
 		# save json
-		data["servers_list"] = servers_list
 		json_save(data)
 
-		await ctx.send(f"successfully imported {len(collected_messages)} messages")
+		await naming_msg.edit(content=f"successfully imported {len(collected_messages)} messages")
 
 	# visible cmd
 	# @commands.hybrid_command(name="server_visibility", aliases=["sv"], help="toggle visibility of server", with_app_command=True)
