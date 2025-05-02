@@ -17,7 +17,11 @@ async def update_status(bot):
     # load the activity type and activity from the JSON config
 	try:
 		config = json_load()
-		activity_type_str = config["main"]["activity_type"].lower()
+		main_config = config.get("main", {})
+
+		activity_type_str = main_config.get("activity_type", "playing").lower()
+		activity_text = main_config.get("activity", "with code")
+
 		activity_type_map = {
 			"playing": discord.ActivityType.playing,
 			"listening": discord.ActivityType.listening,
@@ -31,7 +35,7 @@ async def update_status(bot):
 		await bot.change_presence(
 			activity=discord.Activity(
 				type=activity_type,
-				name=config["main"]["activity"]
+				name=activity_text
 			),
 			status=discord.Status.online
 		)
