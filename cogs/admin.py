@@ -1,4 +1,4 @@
-import discord, traceback
+import discord, traceback, asyncio
 from discord.ext import commands
 from discord.ext.commands import Context
 from discord import app_commands
@@ -39,11 +39,11 @@ class admin(commands.Cog):
 	async def unsync(self, ctx: Context, query: str = "guild") -> None:
 		query = query.lower()
 		if query == "global":
-			await ctx.bot.tree.clear_commands(guild=None)
+			ctx.bot.tree.clear_commands(guild=None)
 			await ctx.send("slash commands globally unsynchronized")
 			return
 		elif query == "guild":
-			await ctx.bot.tree.clear_commands(guild=ctx.guild)
+			ctx.bot.tree.clear_commands(guild=ctx.guild)
 			await ctx.send("slash commands unsynchronized in current server")
 			return
 		await ctx.send("query must be global or guild")
@@ -55,12 +55,14 @@ class admin(commands.Cog):
 	async def resync(self, ctx: Context, query: str = "guild") -> None:
 		query = query.lower()
 		if query == "global":
-			await ctx.bot.tree.clear_commands(guild=None)
+			ctx.bot.tree.clear_commands(guild=None)
+			await asyncio.sleep(1)
 			await ctx.bot.tree.sync()
 			await ctx.send("slash commands globally re-synchronized")
 			return
 		elif query == "guild":
-			await ctx.bot.tree.clear_commands(guild=ctx.guild)
+			ctx.bot.tree.clear_commands(guild=ctx.guild)
+			await asyncio.sleep(1)
 			await ctx.bot.tree.sync(guild=ctx.guild)
 			await ctx.send("slash commands re-synchronized in current server")
 			return
