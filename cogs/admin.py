@@ -1,8 +1,27 @@
-import discord, traceback, asyncio
+import discord, traceback, asyncio, json
 from discord.ext import commands
 from discord.ext.commands import Context
 from discord import app_commands
 from utils.cog_handler import *
+from utils.status import update_status
+
+json_path = "assets/config.json"
+
+def ensure_json():
+	os.makedirs(os.path.dirname(json_path), exist_ok=True)
+	if not os.path.isfile(json_path):
+		with open(json_path, "w", encoding="utf-8") as f:
+			json.dump({}, f, indent=4)
+
+def json_load():
+	ensure_json()
+	with open(json_path, "r", encoding="utf-8") as f:
+		return json.load(f)
+
+def json_save(data):
+	ensure_json()
+	with open(json_path, "w", encoding="utf-8") as f:
+		json.dump(data, f, indent=4)
 
 class admin(commands.Cog):
 	def __init__(self, bot):
@@ -56,13 +75,13 @@ class admin(commands.Cog):
 		query = query.lower()
 		if query == "global":
 			ctx.bot.tree.clear_commands(guild=None)
-			await asyncio.sleep(1)
+			await asyncio.sleep(3)
 			await ctx.bot.tree.sync()
 			await ctx.send("slash commands globally re-synchronized")
 			return
 		elif query == "guild":
 			ctx.bot.tree.clear_commands(guild=ctx.guild)
-			await asyncio.sleep(1)
+			await asyncio.sleep(3)
 			await ctx.bot.tree.sync(guild=ctx.guild)
 			await ctx.send("slash commands re-synchronized in current server")
 			return
@@ -118,6 +137,47 @@ class admin(commands.Cog):
 
 		except Exception as e:
 			await ctx.send(f"error `{cog}`\n```{traceback.format_exc()}```")
+
+	# status
+	@commands.hybrid_command(name="status", help="update bot's status")
+	@app_commands.describe(activity_type="options: playing, listening, watching, competing, streaming", activity="name of activity")
+	@commands.has_permissions(administrator=True)
+	async def status(self, ctx, activity_type: str = None, *, activity: str = None):
+
+		# ensure activity_type is valid
+		activity_type_map = {
+			"playing": discord.ActivityType.playing,
+			"listening": discord.ActivityType.listening,
+			"watching": discord.ActivityType.watching,
+			"competing": discord.ActivityType.competing,
+			"streaming": discord.ActivityType.streaming
+		}
+		
+		if activity_type.lower() not in activity_type_map:
+			await ctx.send("invalid option, use: `playing`, `listening`, `watching`, `competing`, `streaming`")
+			return
+
+		try:
+			config = json_load()
+
+			if activity_type:
+				if activity_type.lower() not in activity_type_map:
+					await ctx.send("invalid option, use: `playing`, `listening`, `watching`, `competing`, `streaming`")
+					return
+				config.setdefault("main", {})["activity_type"] = activity_type.lower()
+			
+			if activity:
+				config.setdefault("main", {})["activity"] = activity
+			
+			json_save(config)
+			await update_status(self.bot)
+			await ctx.send("status updated\n-# deleting..", delete_after=3)
+
+		except FileNotFoundError:
+			await ctx.send("config file not found")
+		
+		except json.JSONDecodeError:
+			await ctx.send("error reading the json file")
 
 	# say cmd
 	@commands.hybrid_command(name="say", help="make bot send a message")
