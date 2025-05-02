@@ -39,11 +39,11 @@ class admin(commands.Cog):
 	async def unsync(self, ctx: Context, query: str = "guild") -> None:
 		query = query.lower()
 		if query == "global":
-			ctx.bot.tree.clear_commands(guild=None)
+			await ctx.bot.tree.clear_commands(guild=None)
 			await ctx.send("slash commands globally unsynchronized")
 			return
 		elif query == "guild":
-			ctx.bot.tree.clear_commands(guild=ctx.guild)
+			await ctx.bot.tree.clear_commands(guild=ctx.guild)
 			await ctx.send("slash commands unsynchronized in current server")
 			return
 		await ctx.send("query must be global or guild")
@@ -55,12 +55,12 @@ class admin(commands.Cog):
 	async def resync(self, ctx: Context, query: str = "guild") -> None:
 		query = query.lower()
 		if query == "global":
-			ctx.bot.tree.clear_commands(guild=None)
+			await ctx.bot.tree.clear_commands(guild=None)
 			await ctx.bot.tree.sync()
 			await ctx.send("slash commands globally re-synchronized")
 			return
 		elif query == "guild":
-			ctx.bot.tree.clear_commands(guild=ctx.guild)
+			await ctx.bot.tree.clear_commands(guild=ctx.guild)
 			await ctx.bot.tree.sync(guild=ctx.guild)
 			await ctx.send("slash commands re-synchronized in current server")
 			return
