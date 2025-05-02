@@ -6,6 +6,10 @@ from discord import app_commands
 json_file_path = "assets/server.json"
 default_color = discord.Color.from_rgb(241, 227, 226)
 
+def calc_index(servers_list, name):
+	index = next((i for i, server in enumerate(servers_list) if name == list(server.keys())[0].lower()), None)
+	return index
+
 def ensure_json():
 	os.makedirs(os.path.dirname(json_file_path), exist_ok=True)
 	if not os.path.isfile(json_file_path):
@@ -249,172 +253,84 @@ class server(commands.Cog):
 		else:
 			await ctx.send(f"{added} servers added\n{edited} servers edited\n{msgs_deleted} server msgs deleted")
 
-	# server move (group)
-	@server.group(aliases=["m"], help="repositioning commands for servers")
-	async def move(self, ctx):
-		if ctx.invoked_subcommand is None:
-			pass
+	# server move
+	@server.command(name="move", aliases=["m"], help="move server in list")
+	@app_commands.describe(name="server to move", action="mode of moving, options: up, down, to, above, below", target="by X amount, to Xth position, above/below X server")
+	async def mv(self, ctx, name: str, action: str, target: str):
+		name = name.lower().strip()
+		action = action.lower().strip()
 
-	# server move up
-	@move.command(name="up", aliases=["u"], help="move up by X amount")
-	@app_commands.describe(name="server to move", amount="amount to move by")
-	async def up(self, ctx, name : str, amount: int):
 		# load json
 		data = json_load()
-
 		servers_list = data.get("servers_list", [])
 
-		# find the index
-		index = next((i for i, server in enumerate(servers_list) if name in server), None)
+		index = calc_index(servers_list, name)
 
 		if index is None:
-			await ctx.send(f"server `{name}` doesn't exist")
-			return
+			return await ctx.send(f"server `{name}` doesn't exist")
+		
+		if action not in ("up", "u", "down", "d", "to", "t", "above", "a", "below", "b"):
+			return await ctx.send(f"invalid action, options: up, down, to, above, below")
 
-		# calculate new position
-		new_index = max(index - amount, 0)
+		amount = None
 
-		# move server
-		server = servers_list.pop(index)
-		servers_list.insert(new_index, server)
-
-		# save json
-		data["servers_list"] = servers_list
-		json_save(data)
-
-		await ctx.send(f"server `{name}` moved up by `{amount}`")
-
-	# server move down
-	@move.command(name="down", aliases=["d"], help="move down by X amount")
-	@app_commands.describe(name="server to move", amount="amount to move by")
-	async def down(self, ctx, name: str, amount: int):
-		# load json
-		data = json_load()
-
-		servers_list = data.get("servers_list", [])
-
-		# find the index
-		index = next((i for i, server in enumerate(servers_list) if name.lower() in (key.lower() for key in server)), None)
-
-		if index is None:
-			await ctx.send(f"server `{name}` doesn't exist")
-			return
-
-		# calculate new position
-		new_index = min(index + amount, len(servers_list) - 1)
-
-		# move server
-		server = servers_list.pop(index)
-		servers_list.insert(new_index, server)
-
-		# save json
-		data["servers_list"] = servers_list
-		json_save(data)
-
-		await ctx.send(f"server {name} moved down by `{amount}`")
-
-	# server move to
-	@move.command(name="to", aliases=["t"], help="move to Xth position")
-	@app_commands.describe(name="server to move", index="position to move to")
-	async def to(self, ctx, name: str, index: int):
-		# load json
-		data = json_load()
-
-		servers_list = data.get("servers_list", [])
-
-		# find the index
-		current_index = next((i for i, server in enumerate(servers_list) if name.lower() in (key.lower() for key in server)), None)
-
-		if current_index is None:
-			await ctx.send(f"server `{name}` doesn't exist")
-			return
-
-		# ensuring target index is within bounds
-		target_index = max(0, min(index -1, len(servers_list) -1))
-
-		# move server
-		server = servers_list.pop(current_index)
-		servers_list.insert(target_index, server)
-
-		# save json
-		data["servers_list"] = servers_list
-		json_save(data)
-
-		await ctx.send(f"server `{name}` moved to position `{index}`")
-
-	# server move above
-	@move.command(name="above", aliases=["a"], help="move above another server")
-	@app_commands.describe(name="server to move", above_name="name of the server to move above")
-	async def above(self, ctx, name: str, above_name: str):
-		# load json
-		data = json_load()
-
-		servers_list = data.get("servers_list", [])
-
-		# find indices
-		moving_index = next((i for i, server in enumerate(servers_list) if name.lower() in (key.lower() for key in server)), None)
-		target_index = next((i for i, server in enumerate(servers_list) if above_name.lower() in (key.lower() for key in server)), None)
-
-		if moving_index is None:
-			await ctx.send(f"server `{name}` doesn't exist")
-			return
-
-		if target_index is None:
-			await ctx.send(f"server `{above_name}` doesn't exist")
-			return
-
-		# remove moving server
-		server = servers_list.pop(moving_index)
-
-		# adjust target_index if necessary
-		if moving_index < target_index:
-			target_index -= 1
-
-		# insert moving server above target
-		servers_list.insert(target_index, server)
-
-		# save json
-		data["servers_list"] = servers_list
-		json_save(data)
-
-		await ctx.send(f"moved `{name}` above `{above_name}`")
+		# move up
+		if action in ("up", "u"):
+			action = "up"
+			server = servers_list.pop(index)
+			amount = int(target)
 			
-	# server move below
-	@move.command(name="below", aliases=["b"], help="move below another server")
-	@app_commands.describe(name="server to move", below_name="name of the server to move below")
-	async def below(self, ctx, name: str, below_name: str):
-		# load json
-		data = json_load()
+			# calculate new position
+			new_index = max(index - amount, 0)
 
-		servers_list = data.get("servers_list", [])
+		elif action in ("down", "d"):
+			action = "down"
+			server = servers_list.pop(index)
+			amount = int(target)
 
-		# find indices
-		moving_index = next((i for i, server in enumerate(servers_list) if name.lower() in (key.lower() for key in server)), None)
-		target_index = next((i for i, server in enumerate(servers_list) if below_name.lower() in (key.lower() for key in server)), None)
+			# calculate new position
+			new_index = index + amount
 
-		if moving_index is None:
-			await ctx.send(f"server `{name}` doesn't exist")
-			return
+		elif action in ("to", "t"):
+			action = "to"
+			server = servers_list.pop(index)
+			amount = int(target)
 
-		if target_index is None:
-			await ctx.send(f"server `{below_name}` doesn't exist")
-			return
+			# ensure target index is within bounds
+			# new_index = max(0, min(amount -1, len(servers_list) - 1))
+			new_index = amount - 1
 
-		# remove moving server
-		server = servers_list.pop(moving_index)
-
-		# adjust target_index if necessary
-		if moving_index < target_index:
-			target_index -= 1
-
-		# insert moving server below target
-		servers_list.insert(target_index + 1, server)
-
+		elif action in ("above", "a"):
+			action = "above"
+			server = servers_list.pop(index)
+			# find target index
+			target_index = calc_index(servers_list, target.lower())
+			if target_index is None:return await ctx.send(f"server `{target}` doesn't exist")
+			new_index = target_index
+			
+		elif action in ("below", "b"):
+			action = "below"
+			server = servers_list.pop(index)
+			# find index
+			target_index = calc_index(servers_list, target.lower())
+			if target_index is None:return await ctx.send(f"server `{target}` doesn't exist")
+			new_index = target_index +1 if index < target_index else target_index +1
+		
+		# insert server at new position
+		servers_list.insert(new_index, server)
+			
 		# save json
 		data["servers_list"] = servers_list
 		json_save(data)
 
-		await ctx.send(f"moved `{name}` below `{below_name}`")
+		msg = f"server `{name}` moved {action}"
+		if action in ("up", "u", "down", "d"):
+			msg += f" by {amount}"
+		elif action in ("to", "t"):
+			msg += f" {target} position"
+		else:
+			msg += f" `{target}`"
+		await ctx.send(msg)
 			
 	# server import (group)
 	@server.group(name="import", help="import messages as server")
