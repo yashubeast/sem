@@ -31,9 +31,6 @@ class admin(commands.Cog):
 	async def on_ready(self):
 		print(f"{__name__} is online!")
 
-	async def on_command_error(self, ctx, error):
-		await ctx.reply(error, ephemeral = True)
-
 	# sync cmd
 	@commands.hybrid_command(name="sync", help="sync app commands", with_app_command=True)
 	@app_commands.describe(query="target of the sync: global or guild")
