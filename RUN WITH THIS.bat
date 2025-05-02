@@ -1,5 +1,28 @@
 @echo off
+
 title quandale dingle
-call .venv/Scripts/activate
+
+SETLOCAL
+
+REM set path to virtual environment
+set VENV_DIR=.venv
+set VENV_ACTIVATE=%VENV_DIR%\Scripts\activate
+
+REM check if venv exists
+if not exist "%VENV_DIR%" (
+	echo creating virtual environment..
+	python -m venv %VENV_DIR%
+)
+
+REM activate venv
+call "%VENV_ACTIVATE%"
+
+REM install requirements
+pip install -r req.txt
+
+REM run bot
 python run.py
+
+ENDLOCAL
+
 pause
