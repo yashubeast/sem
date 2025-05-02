@@ -1,9 +1,15 @@
-import discord, json
+import discord, json, os
 from discord.ext import commands
 from discord.ext.commands import Context
 from discord import app_commands
 
-json_file_path = "assets/servers.json"
+json_file_path = "assets/server.json"
+
+def ensure_json():
+	os.makedirs(os.path.dirname(json_file_path), exist_ok=True)
+	if not os.path.isfile(json_file_path):
+		with open(json_file_path, "w", encoding="utf-8") as f:
+			json.dump({"servers_list": [], "messages_list": []}, f, indent=4)
 
 def json_load():
 	with open(json_file_path, "r", encoding="utf-8") as f:
@@ -20,6 +26,7 @@ class server(commands.Cog):
 	@commands.Cog.listener()
 	async def on_ready(self):
 		print(f"{__name__} is online!")
+		ensure_json()
 
 	# server (group)
 	@commands.hybrid_group(help="tools for server listing", aliases=["s"])
@@ -37,7 +44,7 @@ class server(commands.Cog):
 
 		servers_list = data.get("servers_list", [])
 
-		server_name = name.lower().strip
+		server_name = name.lower().strip()
 
 		if not server_name:
 			return await ctx.send("server name cannot be empty")
@@ -45,9 +52,9 @@ class server(commands.Cog):
 		# check if server already exists
 		updated = False
 		for server in servers_list:
-			if server_name == server:
+			if server_name == next(iter(server)):
 				server[server_name] = message
-				update = True
+				updated = True
 				break
 
 		if not updated:
@@ -89,7 +96,7 @@ class server(commands.Cog):
 			await ctx.send("error reading the server data file")
 
 	# server list
-	@server.command(name="list", alises=["l"], help="list all servers")
+	@server.command(name="list", aliases=["l"], help="list all servers")
 	async def list(self, ctx: Context):
 		# load json
 		data = json_load()
@@ -110,9 +117,9 @@ class server(commands.Cog):
 			data = json_load()
 
 			servers_list = data.get("servers_list", [])
-			server_message = next((list(entry.values())[0] for entry in servers_list if server.lower() in (key.lower() for key in entry)))
+			server_message = next((list(entry.values())[0] for entry in servers_list if server.lower() in (key.lower() for key in entry)), None)
 
-			if not server_message:
+			if server_message is None:
 				await ctx.send(f"server `{server}` doesn't exist")
 				return
 			
@@ -130,7 +137,7 @@ class server(commands.Cog):
 		target = target.lower()
 
 		if target not in ["servers", "messages", "msgs"]:
-			await ctx.send("invalid target")
+			await ctx.send("invalid target, servers \ messages (msgs)")
 			return
 
 		# load json
@@ -147,7 +154,7 @@ class server(commands.Cog):
 		await ctx.send(f"nuked `{target}`")
 
 	# server initiate, send all the server messages
-	@server.command(name="initiate", aliases=["i"], help="initiate all server")
+	@server.command(name="initiate", aliases=["i"], help="initiate/update all server messages")
 	async def initiate(self, ctx: Context):
 		# load json
 		data = json_load()
@@ -212,13 +219,13 @@ class server(commands.Cog):
 		# 	await ctx.send(f"{added} servers added\n{edited} servers edited\n-# auto deleting...", delete_after=7)
 
 	# server move (group)
-	@server.group(help="repositioning commands for servers")
+	@server.group(aliases=["m"], help="repositioning commands for servers")
 	async def move(self, ctx):
 		if ctx.invoked_subcommand is None:
 			pass
 
 	# server move up
-	@move.command(name="up", alises=["u"], help="move up by X amount")
+	@move.command(name="up", aliases=["u"], help="move up by X amount")
 	@app_commands.describe(name="server to move", amount="amount to move by")
 	async def up(self, ctx, name : str, amount: int):
 		# load json
@@ -385,8 +392,8 @@ class server(commands.Cog):
 			return await ctx.send("use import subcommands: as, bulk")
 
 	# server import as
-	@ximport.command(name="as", help="import replied message as a server message")
-	@app_commands.describe(name="server to move", message_id="id of message to import")
+	@ximport.command(name="as", help="import replied message as a server message for prefix cmd, for app cmd use msg id")
+	@app_commands.describe(name="server name", message_id="id of message to import")
 	async def xas(self, ctx, *, name: str, message_id: str = None):
 		if ctx.interaction is None:
 			if ctx.message.reference:
@@ -435,6 +442,7 @@ class server(commands.Cog):
 		found_from = False
 
 		async for message in ctx.channel.history(limit=None, oldest_first=False):
+
 			if user and message.author.id != user.id:
 				continue
 
@@ -451,7 +459,7 @@ class server(commands.Cog):
 					break
 
 		if not collected_messages:
-			await ctx.send("no messages collected")
+			await ctx.send("no server messages imported")
 			return
 
 		# load json
