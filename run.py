@@ -2,37 +2,16 @@ import discord, os, asyncio, json
 from discord.ext import commands
 from dotenv import load_dotenv
 from utils.cog_handler import load_all_cogs
+from utils.status import update_status
 
 load_dotenv()
 
-with open("assets/config.json", "r") as f:
-	config = json.load(f)
-
-bot = commands.Bot(command_prefix=config["main"]["prefix"], help_command=None, intents=discord.Intents.all())
-bot.config = config
+bot = commands.Bot(command_prefix=",", help_command=None, intents=discord.Intents.all())
 
 @bot.event
 async def on_ready():
 	print(f"Logged in as {bot.user}!")
-
-	# get activity_type from config.json
-	activity_type_str = bot.config["main"]["activity_type"].lower()
-	activity_type_map = {
-        "playing": discord.ActivityType.playing,
-        "listening": discord.ActivityType.listening,
-        "watching": discord.ActivityType.watching,
-        "competing": discord.ActivityType.competing,
-        "streaming": discord.ActivityType.streaming
-	}
-	activity_type = activity_type_map.get(activity_type_str, discord.ActivityType.playing)
-
-	await bot.change_presence(
-		activity=discord.Activity(
-			type=activity_type, # .listening / .watching / .competing / .streaming
-			name=bot.config["main"]["activity"]
-		),
-		status=discord.Status.online
-	)
+	await update_status(bot)
 
 @bot.event
 async def on_command_error(ctx, error):
