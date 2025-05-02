@@ -4,6 +4,7 @@ from discord.ext.commands import Context
 from discord import app_commands
 
 json_file_path = "assets/server.json"
+default_color = discord.Color.from_rgb(241, 227, 226)
 
 def ensure_json():
 	os.makedirs(os.path.dirname(json_file_path), exist_ok=True)
@@ -102,14 +103,25 @@ class server(commands.Cog):
 	async def list(self, ctx: Context):
 		# load json
 		data = json_load()
-
 		servers_list = data.get("servers_list", [])
 
 		if not servers_list:
 			return await ctx.send("no servers in list")
 
-		servers = "\n".join(f"- {list(server_name.keys())[0]}" for server_name in servers_list if server_name)
-		await ctx.send(f"**servers:**\n{servers}")
+		total = len(servers_list)
+		midpoint = total // 2 + total % 2
+
+		left = servers_list[:midpoint]
+		right = servers_list[midpoint:]
+
+		def format_column(part, start_index):
+			return "\n".join(f"{i + start_index}. {list(server.keys())[0]}" for i, server in enumerate(part))
+		
+		embed = discord.Embed(title="servers", description="total: {}".format(total), color=default_color)
+		embed.add_field(name="", value=(f">>> {format_column(left, 1)}"))
+		embed.add_field(name="", value=(f">>> {format_column(right, midpoint + 1)}"))
+
+		await ctx.send(embed=embed)
 
 	# server show
 	@server.command(name="show", aliases=["s"], help="previews a server message")
@@ -479,9 +491,10 @@ class server(commands.Cog):
 			try:
 				reply = await self.bot.wait_for("message", check=check, timeout=60)
 				final_messages.append({reply.content: msg.content})
+				asyncio.sleep(0.5)
 				await reply.delete()
 			except asyncio.TimeoutError:
-				await ctx.send("timed out waiting for name response, importing terminated")
+				await ctx.send("timed out waiting for name response, import terminated")
 				return
 
 		# load json
