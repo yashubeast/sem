@@ -412,7 +412,7 @@ class server(commands.Cog):
 			try:
 				reply = await self.bot.wait_for("message", check=check, timeout=60)
 				final_messages.append({reply.content: msg.content})
-				asyncio.sleep(0.5)
+				await asyncio.sleep(0.5)
 				await reply.delete()
 			except asyncio.TimeoutError:
 				await ctx.send("timed out waiting for name response, import terminated")
