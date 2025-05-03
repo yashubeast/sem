@@ -1,6 +1,5 @@
 import discord, json, time, os
 from discord.ext import commands
-# from discord.ext.commands import Context
 from discord import app_commands
 
 json_file_path = "assets/sticky.json"
@@ -26,17 +25,12 @@ def json_save(data):
 class sticky(commands.Cog):
 	def __init__(self, bot):
 		self.bot = bot
-		self.sticky_channel_cache = []
 		self.last_msg_time = {}
-
-	def cache_update(self):
-		data = json_load()
-		self.sticky_channel_cache = data.setdefault("sticky", {}).setdefault("sticky_channels", [])
 	
 	@commands.Cog.listener()
 	async def on_ready(self):
+		await self.bot.wait_until_ready()
 		print(f"{__name__} is online!")
-		self.cache_update()
 
 	# resend sticky when someone sends a message below it
 	@commands.Cog.listener()
@@ -46,7 +40,7 @@ class sticky(commands.Cog):
 			channel_id = str(channel.id)
 
 			# return if channel is not a sticky_channel
-			if channel_id not in self.sticky_channel_cache:return
+			if channel_id not in json_load().get("sticky", {}).get("sticky_channels", []):return
 
 			# return if channel is locked, else lock the channel
 			if channel_id in active_channels:return
@@ -128,7 +122,6 @@ class sticky(commands.Cog):
 			sticky_channels = data.setdefault("sticky", {}).setdefault("sticky_channels", [])
 			if channel_id not in sticky_channels:
 				sticky_channels.append(channel_id)
-				self.sticky_channel_cache.append(channel_id)
 
 			msg = await ctx.channel.send(f"{content}")
 			data.setdefault("sticky", {})[channel_id] = {
@@ -141,20 +134,20 @@ class sticky(commands.Cog):
 			working_channels.discard(channel_id)
 
 	# sticky remove
-	@sticky.command(name="remove", aliases=["r", "d", "del"], help="remove sticky message in current channel")
-	async def remove(self, ctx):
+	@sticky.command(name="remove", aliases=["r", "d", "del"], help="remove sticky message")
+	async def remove(self, ctx, channel: discord.TextChannel = None):
 		try:
-			channel_id = str(ctx.channel.id)
-			working_channels.add(channel_id)
-
-			if channel_id not in self.sticky_channel_cache:return
-			self.sticky_channel_cache.remove(channel_id)	
+			target_channel = channel or ctx.channel
+			channel_id = str(target_channel.id)
 
 			data = json_load()
+			if channel_id not in data.get("sticky", {}).get("sticky_channels", []):return
+
+			working_channels.add(channel_id)
 
 			# attempt to delete sticky message
 			try:
-				last_msg = await ctx.channel.fetch_message(data["sticky"][channel_id]["last_id"])
+				last_msg = await target_channel.fetch_message(data["sticky"][channel_id]["last_id"])
 				await last_msg.delete()
 			except (discord.NotFound, discord.HTTPException):
 				pass
@@ -168,7 +161,7 @@ class sticky(commands.Cog):
 
 			json_save(data)
 
-			await ctx.send("sticky message removed\n-# deleting...", delete_after=5)
+			await ctx.send(f"sticky message removed{f' from {target_channel.mention}' if channel else ''}\n-# deleting...", delete_after=5)
 
 		finally:
 			working_channels.discard(channel_id)
