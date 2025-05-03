@@ -1,4 +1,4 @@
-import discord, traceback, asyncio, json
+import discord, traceback, asyncio, json, re
 from discord.ext import commands
 from discord.ext.commands import Context
 from discord import app_commands
@@ -177,11 +177,62 @@ class admin(commands.Cog):
 			await ctx.send("error reading the json file")
 
 	# say cmd
-	@commands.hybrid_command(name="say", help="make bot send a message")
-	@app_commands.describe(message="the content to be repeated by the bot")
+	@commands.command(name="say", help="make bot send a message")
 	@commands.has_permissions(administrator=True)
 	@commands.bot_has_permissions(manage_messages=True)
 	async def say(self, ctx:Context, *, message: str) -> None:
+		words = message.split()
+		if words[0] == "uc":
+			data = json_load()
+			unichar = data.get("unichar", {})
+
+			if not unichar:return await ctx.send("no emojis available, please use `say ucsetup`")
+
+			message = ' '.join(words[1:])
+
+			if not message.strip(): return await ctx.send("type something in {} for magik")
+
+			def replace_braces(match):
+				content = match.group(1)
+				return ''.join(unichar.get(char.lower(), char) for char in content)
+
+			# apply the transformation
+			message = re.sub(r"\{([^{}]+)\}", replace_braces, message)
+		
+		elif words[0] == 'ucsetup':
+			if len(words) < 2:
+				return await ctx.send("usage: `ucsetup a-z/0-9` while replying to message containing emoji list")
+			
+			mode = words[1].lower()
+			
+			if not ctx.message.reference:return await ctx.send("plaese reply to a message containing emojis")
+
+			replied = await ctx.channel.fetch_message(ctx.message.reference.message_id)
+			emoji_str = replied.content
+			emojis = re.findall(r'<a?:[^:]+:\d+>', emoji_str)
+
+			if mode == 'a-z':
+				if len(emojis) < 26:
+					return await ctx.send("atleast provide 26 emojis for a-z letters")
+				chars = [chr(i) for i in range(ord('a'), ord('z') +1)]
+			
+			elif mode == '0-9':
+				if len(emojis) < 10:
+					return await ctx.send("atleast provide 10 emojis for 0-9 nums")
+				chars = [str(i) for i in range(10)]
+			else:
+				return await ctx.send("invalid mode, use `a-z` or `0-9`, custom range and individual char addition will be added soon")
+
+			# create mapping
+			mapping = dict(zip(chars, emojis))
+
+			# load json
+			data = json_load()
+			data.setdefault("unichar", {}).update(mapping)
+			json_save(data)
+
+			return await ctx.send(f"added emojis for `{mode}`")
+
 		await ctx.send(message)
 		await ctx.message.delete()
 
