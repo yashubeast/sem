@@ -1,4 +1,4 @@
-import discord, os, asyncio
+import discord, os, asyncio, json
 from discord.ext import commands
 from dotenv import load_dotenv
 from utils.cog_handler import load_all_cogs
@@ -21,6 +21,10 @@ async def on_command_error(ctx, error):
 		await ctx.send(">>> missing a required arg\n-# deleting..", delete_after=3)
 	elif isinstance(error, commands.BotMissingPermissions):
 		await ctx.send("i lack perms for ts :wilted:")
+	elif isinstance(error, FileNotFoundError):
+		await ctx.send("contact yasu, json file not found")
+	elif isinstance(error, json.JSONDecodeError):
+		await ctx.send("contact yasu, error reading json file")
 	elif isinstance(error, commands.CommandNotFound):
 		return
 	else:
