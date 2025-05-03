@@ -141,7 +141,7 @@ class sticky(commands.Cog):
 			channel_id = str(target_channel.id)
 
 			data = json_load()
-			if channel_id not in data.get("sticky", {}).get("sticky_channels", []):return
+			if channel_id not in data.get("sticky", {}).get("sticky_channels", []):return await ctx.send(f">>> no sticky message in {target_channel.mention}\n-# deleting..", delete_after=3)
 
 			working_channels.add(channel_id)
 
