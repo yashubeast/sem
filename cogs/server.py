@@ -50,9 +50,11 @@ class server(commands.Cog):
 
 			if server_message is None:
 				await ctx.send(f">>> server `{name}` doesn't exist\n-# deleting..", delete_after=3)
+				await ctx.message.delete()
 				return
 			
 			await ctx.send(server_message)
+			await ctx.message.delete()
 
 	# server add
 	@server.command(name="add", aliases=["a"], help="add/edit a server")
@@ -138,6 +140,7 @@ class server(commands.Cog):
 		embed.add_field(name="", value=(f">>> {format_column(right, midpoint + 1)}"))
 
 		await ctx.send(embed=embed)
+		await ctx.message.delete()
 
 	# server nuke
 	@server.command(name="nuke", help="nukes data")
@@ -167,7 +170,11 @@ class server(commands.Cog):
 
 	# server initiate, send all the server messages
 	@server.command(name="initiate", aliases=["i"], help="initiate/update all server messages")
+	@commands.bot_has_permissions(manage_messages=True, read_message_history=True)
 	async def initiate(self, ctx: Context):
+		
+		await ctx.message.delete()
+
 		# load json
 		data = json_load()
 
@@ -183,6 +190,8 @@ class server(commands.Cog):
 		added = 0
 		msgs_deleted = 0
 		idx = 0
+
+		progress_msg = await ctx.send(">>> initiating.. (0 added/ 0 edited / 0 deleted)")
 
 		while idx < len(server_names):
 			server_name = server_names[idx]
@@ -201,6 +210,8 @@ class server(commands.Cog):
 					# content mismatch, fix mismatch (overwrite)
 					await message.edit(content=server_content)
 					edited += 1
+					await progress_msg.edit(content=f">>> initiating.. ({added} added/ {edited} edited / {msgs_deleted} deleted)")
+					
 
 			# no msg at current index, create a new one
 			except IndexError:
@@ -208,6 +219,7 @@ class server(commands.Cog):
 				added += 1
 				# save id to messages_list
 				messages_list.append(str(new_message.id))
+				await progress_msg.edit(content=f">>> initiating.. ({added} added/ {edited} edited / {msgs_deleted} deleted)")
 
 			# initiated message deleted (i forgot how this logic works in its entirety so i have nothing to explain here)
 			except discord.NotFound:
@@ -217,6 +229,7 @@ class server(commands.Cog):
 				# save json
 				data["messages_list"] = messages_list
 				json_save(data)
+				await progress_msg.edit(content=f">>> initiating.. ({added} added/ {edited} edited / {msgs_deleted} deleted)")
 				
 				continue
 			
@@ -230,6 +243,7 @@ class server(commands.Cog):
 					message = await ctx.channel.fetch_message(int(msg_id))
 					await message.delete()
 					msgs_deleted += 1
+					await progress_msg.edit(content=f">>> initiating.. ({added} added/ {edited} edited / {msgs_deleted} deleted)")
 				except discord.NotFound:
 					pass
 			
@@ -238,11 +252,13 @@ class server(commands.Cog):
 		# save json
 		data["messages_list"] = messages_list
 		json_save(data)
+
+		await progress_msg.delete()
 		
 		if edited == 0 and added == 0 and msgs_deleted == 0:
-			await ctx.send("no changes made\n-# auto deleting...", delete_after=7)
+			await ctx.send(">>> no changes made")
 		else:
-			await ctx.send(f"{added} servers added\n{edited} servers edited\n{msgs_deleted} server msgs deleted")
+			await ctx.send(f">>> {added} added\n{edited} edited\n{msgs_deleted} msgs deleted")
 
 	# server move
 	@server.command(name="move", aliases=["m"], help="move server in list")
