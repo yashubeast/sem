@@ -150,12 +150,14 @@ class admin(commands.Cog):
 			"streaming": discord.ActivityType.streaming
 		}
 		
-		if activity_type.lower() not in activity_type_map:
-			await ctx.send("invalid option, use: `playing`, `listening`, `watching`, `competing`, `streaming`")
-			return
-
 		try:
 			config = json_load()
+			main_config = config.setdefault("main", {})
+
+			if activity_type is None or not activity_type.strip():
+				activity_type = main_config.get("activity_type", "playing")
+
+			activity_type = activity_type.lower()
 
 			if activity_type:
 				if activity_type.lower() not in activity_type_map:
