@@ -142,6 +142,24 @@ class server(commands.Cog):
 		await ctx.send(embed=embed)
 		await ctx.message.delete()
 
+	@server.command(name="rename", aliases=["ren"], help="rename a server")
+	@app_commands.describe(old_name="server to rename", new_name="new server name")
+	async def rename_server(self, ctx, old_name: str, *, new_name: str):
+		data = json_load()
+		servers_list = data.get("servers_list", [])
+
+		for i, entry in enumerate(servers_list):
+			if old_name in entry:
+				value = entry[old_name]
+				servers_list[i] = {new_name: value}
+				data["servers_list"] = servers_list
+				json_save(data)
+				await ctx.send(f"renamed server `{old_name}` to `{new_name}`")
+				return
+
+		await ctx.send(f"server `{old_name}` doesn't exist")
+
+
 	# server nuke
 	@server.command(name="nuke", help="nukes data")
 	@app_commands.describe(target="options: servers, messages(msgs) or * for both")
