@@ -36,11 +36,23 @@ class server(commands.Cog):
 		ensure_json()
 
 	# server (group)
-	@commands.hybrid_group(help="tools for server listing", aliases=["s"])
+	@commands.hybrid_group(help="tools for server listing | previews server", aliases=["s"])
 	@commands.has_permissions(administrator=True)
-	async def server(self, ctx):
-		if ctx.invoked_subcommand is None:
-			pass
+	async def server(self, ctx, *, name: str = None):
+		subcommand = [cmd.name for cmd in ctx.command.commands]
+		if not name:return await ctx.send(">>> provide server name to preview\n-# deleting..", delete_after=3)
+		name = name.lower().strip()
+		if name not in subcommand:
+			data = json_load()
+
+			servers_list = data.get("servers_list", [])
+			server_message = next((list(entry.values())[0] for entry in servers_list if name in (key.lower() for key in entry)), None)
+
+			if server_message is None:
+				await ctx.send(f">>> server `{name}` doesn't exist\n-# deleting..", delete_after=3)
+				return
+			
+			await ctx.send(server_message)
 
 	# server add
 	@server.command(name="add", aliases=["a"], help="add/edit a server")
@@ -126,27 +138,6 @@ class server(commands.Cog):
 		embed.add_field(name="", value=(f">>> {format_column(right, midpoint + 1)}"))
 
 		await ctx.send(embed=embed)
-
-	# server show
-	@server.command(name="show", aliases=["s"], help="previews a server message")
-	@app_commands.describe(server="name of the server to show")
-	async def show(self, ctx, *,server: str):
-		try:
-			data = json_load()
-
-			servers_list = data.get("servers_list", [])
-			server_message = next((list(entry.values())[0] for entry in servers_list if server.lower() in (key.lower() for key in entry)), None)
-
-			if server_message is None:
-				await ctx.send(f"server `{server}` doesn't exist")
-				return
-			
-			await ctx.send(server_message)
-
-		except FileNotFoundError:
-			await ctx.send("server data fiel not found.")
-		except json.JSONDecodeError:
-			await ctx.send("error reading the server data file.")
 
 	# server nuke
 	@server.command(name="nuke", help="nukes data")
