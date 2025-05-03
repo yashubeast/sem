@@ -177,7 +177,7 @@ class admin(commands.Cog):
 			await ctx.send("error reading the json file")
 
 	# say cmd
-	@commands.command(name="say", help="make bot send a message")
+	@commands.command(name="say", help="make bot send a message, sub-command: uc")
 	@commands.has_permissions(administrator=True)
 	@commands.bot_has_permissions(manage_messages=True)
 	async def say(self, ctx:Context, *, message: str) -> None:
