@@ -33,7 +33,6 @@ class server(commands.Cog):
 	@commands.Cog.listener()
 	async def on_ready(self):
 		print(f"{__name__} is online!")
-		ensure_json()
 
 	# server (group)
 	@commands.hybrid_group(help="tools for server listing | previews server", aliases=["s"])
@@ -159,7 +158,6 @@ class server(commands.Cog):
 
 		await ctx.send(f"server `{old_name}` doesn't exist")
 
-
 	# server nuke
 	@server.command(name="nuke", help="nukes data")
 	@app_commands.describe(target="options: servers, messages(msgs) or * for both")
@@ -209,7 +207,8 @@ class server(commands.Cog):
 		msgs_deleted = 0
 		idx = 0
 
-		progress_msg = await ctx.send(">>> initiating.. (0 added/ 0 edited / 0 deleted)")
+		prog_msg = (f">>> initiating.. ({added} added/ {edited} edited / {msgs_deleted} deleted)")
+		progress_msg = await ctx.send(prog_msg)
 
 		while idx < len(server_names):
 			server_name = server_names[idx]
@@ -228,7 +227,7 @@ class server(commands.Cog):
 					# content mismatch, fix mismatch (overwrite)
 					await message.edit(content=server_content)
 					edited += 1
-					await progress_msg.edit(content=f">>> initiating.. ({added} added/ {edited} edited / {msgs_deleted} deleted)")
+					await progress_msg.edit(content=prog_msg)
 					
 
 			# no msg at current index, create a new one
@@ -237,7 +236,7 @@ class server(commands.Cog):
 				added += 1
 				# save id to messages_list
 				messages_list.append(str(new_message.id))
-				await progress_msg.edit(content=f">>> initiating.. ({added} added/ {edited} edited / {msgs_deleted} deleted)")
+				await progress_msg.edit(content=prog_msg)
 
 			# initiated message deleted (i forgot how this logic works in its entirety so i have nothing to explain here)
 			except discord.NotFound:
@@ -247,7 +246,7 @@ class server(commands.Cog):
 				# save json
 				data["messages_list"] = messages_list
 				json_save(data)
-				await progress_msg.edit(content=f">>> initiating.. ({added} added/ {edited} edited / {msgs_deleted} deleted)")
+				await progress_msg.edit(content=prog_msg)
 				
 				continue
 			
@@ -261,7 +260,7 @@ class server(commands.Cog):
 					message = await ctx.channel.fetch_message(int(msg_id))
 					await message.delete()
 					msgs_deleted += 1
-					await progress_msg.edit(content=f">>> initiating.. ({added} added/ {edited} edited / {msgs_deleted} deleted)")
+					await progress_msg.edit(content=prog_msg)
 				except discord.NotFound:
 					pass
 			
@@ -489,56 +488,6 @@ class server(commands.Cog):
 		json_save(data)
 
 		await naming_msg.edit(content=f"successfully imported {len(collected_messages)} messages")
-
-	# visible cmd
-	# @commands.hybrid_command(name="server_visibility", aliases=["sv"], help="toggle visibility of server", with_app_command=True)
-	# @commands.has_permissions(administrator=True)
-	# async def server_visibility(self, ctx, name: str):
-	# 	try:
-	# 		with open(json_file_path, "r") as f:
-	# 			data = json.load(f)
-			
-	# 		servers = data.get("servers", {})
-	# 		visible_servers = data.get("visible_servers", {})
-
-	# 		# find the input name in servers list
-	# 		server = servers.get(name.lower())
-
-	# 		# server doesn't exist in servers
-	# 		if server is None:
-	# 			await ctx.send(f"{name} server not found.")
-	# 			return
-
-	# 		# if server is visible already
-	# 		if name in visible_servers:
-	# 			# server is already visible
-	# 			server_data = visible_servers[name]
-	# 			message_id = server_data.get("message_id")
-	# 			channel_id = server_data.get("channel_id")
-
-	# 			if message_id and channel_id:
-	# 				try:
-	# 					channel = await self.bot.fetch_channel(int(channel_id))
-	# 					message = await channel.fetch_message(int(message_id))
-	# 					await message.delete()
-
-	# 				except Exception as e:
-	# 					await ctx.send(f"Failed to delete message (possibly inexistant): {e}")
-
-	# 			del visible_servers[name]
-	# 			await ctx.send(f"{name} server hidden.")
-
-	# 		else:
-	# 			# server is NOT visible
-	# 			visible_servers[name] = {}
-	# 			await ctx.send(f"{name} server displayed.")
-
-	# 		data["visible_servers"] = visible_servers
-	# 		with open(json_file_path, "w", encoding="utf-8") as f:
-	# 			json.dump(data, f, indent=4)
-
-	# 	except Exception as e:
-	# 		await ctx.send(f"Error: {e}")
 
 async def setup(bot):
 	await bot.add_cog(server(bot))
