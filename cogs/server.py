@@ -2,9 +2,23 @@ import discord, json, os, asyncio
 from discord.ext import commands
 from discord.ext.commands import Context
 from discord import app_commands
+from typing import Tuple
 
 json_file_path = "assets/server.json"
 default_color = discord.Color.from_rgb(241, 227, 226)
+
+def build_message_sequences(contents, separator, use_separators, include_edges):
+	sequence = []
+	for i, content in enumerate(contents):
+		if i == 0 and use_separators and include_edges:
+			sequence.append(("separator", separator))
+		
+		sequence.append(("content", content))
+		
+		if use_separators and (i < len(contents) -1 or (i == len(contents) -1 and include_edges)):
+			sequence.append(("separator", separator))
+	
+	return sequence
 
 def calc_index(servers_list, name):
 	index = next((i for i, server in enumerate(servers_list) if name == list(server.keys())[0].lower()), None)
@@ -160,12 +174,12 @@ class server(commands.Cog):
 
 	# server nuke
 	@server.command(name="nuke", help="nukes data")
-	@app_commands.describe(target="options: servers, messages(msgs) or * for both")
+	@app_commands.describe(target="options: servers, messages(msgs), separator_config or * for all")
 	async def nuke(self, ctx, target: str):
 		target = target.lower()
 
 		if target not in ["servers", "messages", "msgs", "*"]:
-			await ctx.send("invalid target, servers \ messages (msgs) or * for all")
+			await ctx.send("invalid target: servers, messages (msgs), separator_config or * for all")
 			return
 
 		# load json
@@ -174,15 +188,50 @@ class server(commands.Cog):
 		if target == "*":
 			data["servers_list"] = []
 			data["messages_list"] = []
+			data["separator_config"] = {}
 		elif target == "servers":
 			data["servers_list"] = []
 		elif target in["messages", "msgs"]:
 			data["messages_list"] = []
+		elif target == "serparator_config":
+			data["separator_config"] = {}
 
 		# save json
 		json_save(data)
 
-		await ctx.send(f"nuked `{'all' if target == '*' else target}`")
+		await ctx.send(f"nuked `{'all data for server (lmao)' if target == '*' else target}`")
+
+	# server separator
+	@server.command(name="separator", aliases=["sep"], help="change separator options | preview separator text")
+	@app_commands.describe(enabled="enable separators true/false", edges="include edges (above top/below bottom) true/false)", style="content of separator")
+	async def separators(self, ctx, enabled: str = None, edges: str = None, *, style: str = None):
+		
+		if enabled is not None:enabled = enabled.lower() in ('true', 'yes', '1', 'on')
+		if edges is not None:edges = edges.lower() in ('true', 'yes', '1', 'on')
+
+		# load json
+		data = json_load()
+		config = data.setdefault("separator_config", {
+			"enabled": True,
+			"edges": True,
+			"style": "••••••••••••••••••••••••••••••••••••••••••••••••••••"
+		})
+
+		if enabled is None and edges is None and style is None:
+			await ctx.send(f"{config['style']}\nseparator is {'`enabled`' if config['enabled'] else '`disabled`'} and edges are {'`included`' if config['edges'] else '`excluded`'}\n{config['style']}")
+			return
+
+		if enabled is not None:
+			config["enabled"] = enabled
+		if edges is not None:
+			config["edges"] = edges
+		if style is not None and style.strip():
+			config["style"] = style.strip()
+
+		data["separator_config"] = config
+		json_save(data)
+
+		await ctx.send("updated separators\n-# deleting..", delete_after=3)
 
 	# server initiate, send all the server messages
 	@server.command(name="initiate", aliases=["i"], help="initiate/update all server messages")
@@ -198,45 +247,45 @@ class server(commands.Cog):
 		servers_list = data.get("servers_list", [])
 		messages_list = data.get("messages_list", [])
 
+		sep_config = data.get("separator_config", {})
+		use_separators = sep_config.get("enabled", True)
+		include_edges = sep_config.get("edges", True)
+		separator_text = sep_config.get("style", "••••••••••••••••••••••••••••••••••••••••••••••••••••")
+
 		# load keys from dicts
-		server_names = [list(entry.keys())[0] for entry in servers_list]
-		messages_ids = messages_list
+		server_contents = [list(entry.values())[0] for entry in servers_list]
+		message_sequence: list[Tuple[str. str]] = build_message_sequences(server_contents, separator_text, use_separators, include_edges)
 		
 		edited = 0
 		added = 0
 		msgs_deleted = 0
 		idx = 0
 
-		prog_msg = (f">>> initiating.. ({added} added/ {edited} edited / {msgs_deleted} deleted)")
-		progress_msg = await ctx.send(prog_msg)
+		progress_msg = await ctx.send(f">>> initiating.. ({added} added/ {edited} edited / {msgs_deleted} deleted)")
 
-		while idx < len(server_names):
-			server_name = server_names[idx]
-
-			# content of current server name
-			server_content = next((list(entry.values())[0] for entry in servers_list if server_name.lower() == list(entry.keys())[0].lower()), None)
+		while idx < len(message_sequence):
+			msg_type, content = message_sequence[idx]
 
 			# if theres a message id at current index
 			try:
-				message_id = messages_ids[idx]
-				channel = ctx.channel
-				message = await channel.fetch_message(int(message_id))
+				message_id = messages_list[idx]
+				message = await ctx.channel.fetch_message(int(message_id))
 
 				# comparing content of existing msg vs stored msg
-				if message.content.strip() != server_content.strip():
+				if message.content.strip() != content.strip():
 					# content mismatch, fix mismatch (overwrite)
-					await message.edit(content=server_content)
+					await message.edit(content=content)
 					edited += 1
-					await progress_msg.edit(content=prog_msg)
+					await progress_msg.edit(content=f">>> initiating.. ({added} added/ {edited} edited / {msgs_deleted} deleted)")
 					
 
 			# no msg at current index, create a new one
 			except IndexError:
-				new_message = await ctx.send(server_content)
+				new_message = await ctx.send(content)
 				added += 1
 				# save id to messages_list
 				messages_list.append(str(new_message.id))
-				await progress_msg.edit(content=prog_msg)
+				await progress_msg.edit(content=f">>> initiating.. ({added} added/ {edited} edited / {msgs_deleted} deleted)")
 
 			# initiated message deleted (i forgot how this logic works in its entirety so i have nothing to explain here)
 			except discord.NotFound:
@@ -246,25 +295,25 @@ class server(commands.Cog):
 				# save json
 				data["messages_list"] = messages_list
 				json_save(data)
-				await progress_msg.edit(content=prog_msg)
+				await progress_msg.edit(content=f">>> initiating.. ({added} added/ {edited} edited / {msgs_deleted} deleted)")
 				
 				continue
 			
 			idx += 1
 			
 		# remove useless messages
-		if len(messages_list) > len(server_names):
-			excess_ids = messages_list[len(server_names):]
+		if len(messages_list) > len(message_sequence):
+			excess_ids = messages_list[len(message_sequence):]
 			for msg_id in excess_ids:
 				try:
 					message = await ctx.channel.fetch_message(int(msg_id))
 					await message.delete()
 					msgs_deleted += 1
-					await progress_msg.edit(content=prog_msg)
+					await progress_msg.edit(content=f">>> initiating.. ({added} added/ {edited} edited / {msgs_deleted} deleted)")
 				except discord.NotFound:
 					pass
 			
-			messages_list = messages_list[:len(server_names)]
+			messages_list = messages_list[:len(message_sequence)]
 
 		# save json
 		data["messages_list"] = messages_list
