@@ -141,7 +141,7 @@ class sticky(commands.Cog):
 			working_channels.discard(channel_id)
 
 	# sticky remove
-	@sticky.command(name="remove", help="remove sticky message in current channel")
+	@sticky.command(name="remove", aliases=["r", "d", "del"], help="remove sticky message in current channel")
 	async def remove(self, ctx):
 		try:
 			channel_id = str(ctx.channel.id)
@@ -172,6 +172,27 @@ class sticky(commands.Cog):
 
 		finally:
 			working_channels.discard(channel_id)
+
+	# sticky list
+	@sticky.command(name="list", aliases=["l"], help="list all channels with active sticky messages")
+	async def list(self, ctx):
+		data = json_load()
+		sticky_data = data.get("sticky", {})
+		sticky_channels = sticky_data.get("sticky_channels", [])
+
+		if not sticky_channels:
+			return await ctx.send(">>> no active sticky messages\n-# deleting..", delete_after=3)
+
+		lines = []
+		for channel_id in sticky_channels:
+			channel = self.bot.get_channel(int(channel_id))
+			if channel:
+				lines.append(f"- <#{channel.id}>")
+			else:
+				lines.append(f"- unknown channel (id: `{channel_id}`)")
+
+		message = ">>> sticky messages active in:\n" + "\n".join(lines)
+		await ctx.send(message)
 
 	# if sticky message is deleted
 	# @commands.Cog.listener()
