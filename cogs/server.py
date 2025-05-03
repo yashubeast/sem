@@ -24,7 +24,7 @@ def json_load():
 def json_save(data):
 	ensure_json()
 	with open(json_file_path, "w", encoding="utf-8") as f:
-		json.dump(data, f, indent=4)
+		json.dump(data, f, ensure_ascii=False, indent=4)
 
 class server(commands.Cog):
 	def __init__(self, bot):
