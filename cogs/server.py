@@ -87,10 +87,10 @@ class server(commands.Cog):
 
 		await ctx.send(f"server `{server_name}` {'updated' if updated else 'added'}")
 
-	# server delete
-	@server.command(name="delete", aliases=["d", "del"], help="delete a server")
-	@app_commands.describe(server="name of the server to delete")
-	async def delete(self, ctx, *,server: str):
+	# server remove
+	@server.command(name="remove", aliases=["r", "rm", "d", "del"], help="remove a server")
+	@app_commands.describe(server="name of the server to remove")
+	async def remove(self, ctx, *,server: str):
 		try:
 			# load json
 			data = json_load()
@@ -109,7 +109,7 @@ class server(commands.Cog):
 			# save json
 			json_save(data)
 			
-			await ctx.send(f"server `{server}` deleted")
+			await ctx.send(f"server `{server}` removed")
 
 		except FileNotFoundError:
 			await ctx.send("server data file not found")
@@ -359,7 +359,14 @@ class server(commands.Cog):
 				data = json_load()
 				
 				servers_list = data.get("servers_list", [])
-				servers_list.append({name: server_content})
+				# check if server exists, replace its value
+				for entry in servers_list:
+					if name in entry:
+						entry[name] = server_content
+						break
+				else:
+					# not found append
+					servers_list.append({name: server_content})
 
 				# save json
 				data["servers_list"] = servers_list
@@ -378,7 +385,14 @@ class server(commands.Cog):
 				data = json_load()
 				
 				servers_list = data.get("servers_list", [])
-				servers_list.append({name: app_server_content})
+				# check if server exists, replace its value
+				for entry in servers_list:
+					if name in entry:
+						entry[name] = app_server_content
+						break
+				else:
+					# not found append
+					servers_list.append({name: app_server_content})
 
 				# save json
 				data["servers_list"] = servers_list
