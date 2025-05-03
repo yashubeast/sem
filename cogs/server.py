@@ -202,7 +202,7 @@ class server(commands.Cog):
 		await ctx.send(f"nuked `{'all data for server (lmao)' if target == '*' else target}`")
 
 	# server separator
-	@server.command(name="separator", aliases=["sep"], help="change separator options | preview separator text")
+	@server.command(name="separator", aliases=["sep"], help="change separator options | preview separator config")
 	@app_commands.describe(enabled="enable separators true/false", edges="include edges (above top/below bottom) true/false)", style="content of separator")
 	async def separators(self, ctx, enabled: str = None, edges: str = None, *, style: str = None):
 		
