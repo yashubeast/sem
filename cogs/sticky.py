@@ -1,26 +1,11 @@
 import discord, json, time, os
 from discord.ext import commands
 from discord import app_commands
+from utils.json_handler import json_load, json_save
 
 json_file_path = "assets/sticky.json"
 active_channels = set()
 working_channels = set()
-
-def ensure_json():
-	os.makedirs(os.path.dirname(json_file_path), exist_ok=True)
-	if not os.path.isfile(json_file_path):
-		with open(json_file_path, "w", encoding="utf-8") as f:
-			json.dump({"sticky": {}}, f, indent=4)
-
-def json_load():
-	ensure_json()
-	with open(json_file_path, "r", encoding="utf-8") as f:
-		return json.load(f)
-
-def json_save(data):
-	ensure_json()
-	with open(json_file_path, "w", encoding="utf-8") as f:
-		json.dump(data, f, indent=4)
 
 class sticky(commands.Cog):
 	def __init__(self, bot):
@@ -40,7 +25,7 @@ class sticky(commands.Cog):
 			channel_id = str(channel.id)
 
 			# return if channel is not a sticky_channel
-			if channel_id not in json_load().get("sticky", {}).get("sticky_channels", []):return
+			if channel_id not in json_load("sticky").setdefault("sticky", {}).setdefault("sticky_channels", []):return
 
 			# return if channel is locked, else lock the channel
 			if channel_id in active_channels:return
@@ -59,8 +44,8 @@ class sticky(commands.Cog):
 			# channel is sticky
 
 			# load json
-			data = json_load()
-			sticky = data.get("sticky", {}).get(channel_id)
+			data = json_load("sticky")
+			sticky = data.setdefault("sticky", {}).get(channel_id)
 
 			# get latest message instead of new
 			latest_msg = [msg async for msg in channel.history(limit=1)][0]
@@ -84,7 +69,7 @@ class sticky(commands.Cog):
 
 			# save json
 			data["sticky"][channel_id]["last_id"] = new_msg.id
-			json_save(data)
+			json_save("sticky", data)
 	
 		except Exception as e:
 			raise Exception(f"{e}")
@@ -108,9 +93,9 @@ class sticky(commands.Cog):
 
 			working_channels.add(channel_id)
 
-			data = json_load()
+			data = json_load("sticky")
 
-			old_sticky = data.get("sticky", {}).get(channel_id)
+			old_sticky = data.setdefault("sticky", {}).get(channel_id)
 			if old_sticky:
 				try:
 					last_msg = await ctx.channel.fetch_message(old_sticky["last_id"])
@@ -128,7 +113,7 @@ class sticky(commands.Cog):
 				"content": content,
 				"last_id": msg.id
 			}
-			json_save(data)
+			json_save("sticky", data)
 
 		finally:
 			working_channels.discard(channel_id)
@@ -140,8 +125,8 @@ class sticky(commands.Cog):
 			target_channel = channel or ctx.channel
 			channel_id = str(target_channel.id)
 
-			data = json_load()
-			if channel_id not in data.get("sticky", {}).get("sticky_channels", []):return await ctx.send(f">>> no sticky message in {target_channel.mention}\n-# deleting..", delete_after=3)
+			data = json_load("sticky")
+			if channel_id not in data.setdefault("sticky", {}).setdefault("sticky_channels", []):return await ctx.send(f">>> no sticky message in {target_channel.mention}\n-# deleting..", delete_after=3)
 
 			working_channels.add(channel_id)
 
@@ -159,7 +144,7 @@ class sticky(commands.Cog):
 			if channel_id in data["sticky"]:
 				del data["sticky"][channel_id]
 
-			json_save(data)
+			json_save("sticky", data)
 
 			await ctx.send(f"sticky message removed{f' from {target_channel.mention}' if channel else ''}\n-# deleting...", delete_after=5)
 
@@ -169,9 +154,9 @@ class sticky(commands.Cog):
 	# sticky list
 	@sticky.command(name="list", aliases=["l"], help="list all channels with active sticky messages")
 	async def list(self, ctx):
-		data = json_load()
-		sticky_data = data.get("sticky", {})
-		sticky_channels = sticky_data.get("sticky_channels", [])
+		data = json_load("sticky")
+		sticky_data = data.setdefault("sticky", {})
+		sticky_channels = sticky_data.setdefault("sticky_channels", [])
 
 		if not sticky_channels:
 			return await ctx.send(">>> no active sticky messages\n-# deleting..", delete_after=3)

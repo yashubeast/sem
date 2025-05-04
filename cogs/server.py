@@ -3,6 +3,7 @@ from discord.ext import commands
 from discord.ext.commands import Context
 from discord import app_commands
 from typing import Tuple
+from utils.json_handler import json_load, json_save
 
 json_file_path = "assets/server.json"
 default_color = discord.Color.from_rgb(241, 227, 226)
@@ -24,22 +25,6 @@ def calc_index(servers_list, name):
 	index = next((i for i, server in enumerate(servers_list) if name == list(server.keys())[0].lower()), None)
 	return index
 
-def ensure_json():
-	os.makedirs(os.path.dirname(json_file_path), exist_ok=True)
-	if not os.path.isfile(json_file_path):
-		with open(json_file_path, "w", encoding="utf-8") as f:
-			json.dump({"servers_list": [], "messages_list": []}, f, indent=4)
-
-def json_load():
-	ensure_json()
-	with open(json_file_path, "r", encoding="utf-8") as f:
-		return json.load(f)
-
-def json_save(data):
-	ensure_json()
-	with open(json_file_path, "w", encoding="utf-8") as f:
-		json.dump(data, f, ensure_ascii=False, indent=4)
-
 class server(commands.Cog):
 	def __init__(self, bot):
 		self.bot = bot
@@ -56,9 +41,9 @@ class server(commands.Cog):
 		if not name:return await ctx.send(">>> provide server name to preview\n-# deleting..", delete_after=3)
 		name = name.lower().strip()
 		if name not in subcommand:
-			data = json_load()
+			data = json_load("server")
 
-			servers_list = data.get("servers_list", [])
+			servers_list = data.setdefault("servers_list", [])
 			server_message = next((list(entry.values())[0] for entry in servers_list if name in (key.lower() for key in entry)), None)
 
 			if server_message is None:
@@ -74,9 +59,9 @@ class server(commands.Cog):
 	@app_commands.describe(name="server name", message="full message to store")
 	async def add(self, ctx: Context, name: str, *, message: str):
 		# load json
-		data = json_load()
+		data = json_load("server")
 
-		servers_list = data.get("servers_list", [])
+		servers_list = data.setdefault("servers_list", [])
 
 		server_name = name.lower().strip()
 
@@ -96,7 +81,7 @@ class server(commands.Cog):
 
 		# save json
 		data["servers_list"] = servers_list
-		json_save(data)
+		json_save("server", data)
 
 		await ctx.send(f"server `{server_name}` {'updated' if updated else 'added'}")
 
@@ -106,9 +91,9 @@ class server(commands.Cog):
 	async def remove(self, ctx, *,server: str):
 		try:
 			# load json
-			data = json_load()
+			data = json_load("server")
 
-			servers_list = data.get("servers_list", [])
+			servers_list = data.setdefault("servers_list", [])
 
 			if not any(server.lower() == key.lower() for entry in servers_list for key in entry):
 				await ctx.send(f"server `{server}` doesn't exist ")
@@ -120,7 +105,7 @@ class server(commands.Cog):
 					break
 
 			# save json
-			json_save(data)
+			json_save("server", data)
 			
 			await ctx.send(f"server `{server}` removed")
 
@@ -133,8 +118,8 @@ class server(commands.Cog):
 	@server.command(name="list", aliases=["l"], help="list all servers")
 	async def list(self, ctx: Context):
 		# load json
-		data = json_load()
-		servers_list = data.get("servers_list", [])
+		data = json_load("server")
+		servers_list = data.setdefault("servers_list", [])
 
 		if not servers_list:
 			return await ctx.send("no servers in list")
@@ -158,15 +143,15 @@ class server(commands.Cog):
 	@server.command(name="rename", aliases=["ren"], help="rename a server")
 	@app_commands.describe(old_name="server to rename", new_name="new server name")
 	async def rename_server(self, ctx, old_name: str, *, new_name: str):
-		data = json_load()
-		servers_list = data.get("servers_list", [])
+		data = json_load("server")
+		servers_list = data.setdefault("servers_list", [])
 
 		for i, entry in enumerate(servers_list):
 			if old_name in entry:
 				value = entry[old_name]
 				servers_list[i] = {new_name: value}
 				data["servers_list"] = servers_list
-				json_save(data)
+				json_save("server", data)
 				await ctx.send(f"renamed server `{old_name}` to `{new_name}`")
 				return
 
@@ -183,7 +168,7 @@ class server(commands.Cog):
 			return
 
 		# load json
-		data = json_load()
+		data = json_load("server")
 		
 		if target == "*":
 			data["servers_list"] = []
@@ -197,7 +182,7 @@ class server(commands.Cog):
 			data["separator_config"] = {}
 
 		# save json
-		json_save(data)
+		json_save("server", data)
 
 		await ctx.send(f"nuked `{'all data for server (lmao)' if target == '*' else target}`")
 
@@ -210,7 +195,7 @@ class server(commands.Cog):
 		if edges is not None:edges = edges.lower() in ('true', 'yes', '1', 'on')
 
 		# load json
-		data = json_load()
+		data = json_load("server")
 		config = data.setdefault("separator_config", {
 			"enabled": True,
 			"edges": True,
@@ -229,7 +214,7 @@ class server(commands.Cog):
 			config["style"] = style.strip()
 
 		data["separator_config"] = config
-		json_save(data)
+		json_save("server", data)
 
 		await ctx.send("updated separators\n-# deleting..", delete_after=3)
 
@@ -241,16 +226,16 @@ class server(commands.Cog):
 		await ctx.message.delete()
 
 		# load json
-		data = json_load()
+		data = json_load("server")
 
 		# load dicts
-		servers_list = data.get("servers_list", [])
-		messages_list = data.get("messages_list", [])
+		servers_list = data.setdefault("servers_list", [])
+		messages_list = data.setdefault("messages_list", [])
 
-		sep_config = data.get("separator_config", {})
-		use_separators = sep_config.get("enabled", True)
-		include_edges = sep_config.get("edges", True)
-		separator_text = sep_config.get("style", "••••••••••••••••••••••••••••••••••••••••••••••••••••")
+		sep_config = data.setdefault("separator_config", {})
+		use_separators = sep_config.setdefault("enabled", True)
+		include_edges = sep_config.setdefault("edges", True)
+		separator_text = sep_config.setdefault("style", "••••••••••••••••••••••••••••••••••••••••••••••••••••")
 
 		# load keys from dicts
 		server_contents = [list(entry.values())[0] for entry in servers_list]
@@ -294,7 +279,7 @@ class server(commands.Cog):
 
 				# save json
 				data["messages_list"] = messages_list
-				json_save(data)
+				json_save("server", data)
 				await progress_msg.edit(content=f">>> initiating.. ({added} added/ {edited} edited / {msgs_deleted} deleted)")
 				
 				continue
@@ -317,7 +302,7 @@ class server(commands.Cog):
 
 		# save json
 		data["messages_list"] = messages_list
-		json_save(data)
+		json_save("server", data)
 
 		await progress_msg.delete()
 		
@@ -334,8 +319,8 @@ class server(commands.Cog):
 		action = action.lower().strip()
 
 		# load json
-		data = json_load()
-		servers_list = data.get("servers_list", [])
+		data = json_load("server")
+		servers_list = data.setdefault("servers_list", [])
 
 		index = calc_index(servers_list, name)
 
@@ -394,7 +379,7 @@ class server(commands.Cog):
 			
 		# save json
 		data["servers_list"] = servers_list
-		json_save(data)
+		json_save("server", data)
 
 		msg = f"server `{name}` moved {action}"
 		if action in ("up", "u", "down", "d"):
@@ -422,9 +407,9 @@ class server(commands.Cog):
 				server_content = replied_message.content
 
 				# load json
-				data = json_load()
+				data = json_load("server")
 				
-				servers_list = data.get("servers_list", [])
+				servers_list = data.setdefault("servers_list", [])
 				# check if server exists, replace its value
 				for entry in servers_list:
 					if name in entry:
@@ -436,7 +421,7 @@ class server(commands.Cog):
 
 				# save json
 				data["servers_list"] = servers_list
-				json_save(data)
+				json_save("server", data)
 				
 				await ctx.send(f"server `{name}` imported")
 			else:
@@ -448,9 +433,9 @@ class server(commands.Cog):
 				app_server_content = app_replied_message.content
 
 				# load json
-				data = json_load()
+				data = json_load("server")
 				
-				servers_list = data.get("servers_list", [])
+				servers_list = data.setdefault("servers_list", [])
 				# check if server exists, replace its value
 				for entry in servers_list:
 					if name in entry:
@@ -462,7 +447,7 @@ class server(commands.Cog):
 
 				# save json
 				data["servers_list"] = servers_list
-				json_save(data)
+				json_save("server", data)
 				
 				await ctx.send(f"server `{name}` imported")
 			else:
@@ -515,7 +500,7 @@ class server(commands.Cog):
 				return
 
 		# load json
-		data = json_load()
+		data = json_load("server")
 
 		servers_list = data.setdefault("servers_list", [])
 
@@ -534,7 +519,7 @@ class server(commands.Cog):
 		data["servers_list"] = [{k: v} for k, v in merged.items()]
 
 		# save json
-		json_save(data)
+		json_save("server", data)
 
 		await naming_msg.edit(content=f"successfully imported {len(collected_messages)} messages")
 

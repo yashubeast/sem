@@ -3,25 +3,8 @@ from discord.ext import commands
 from discord.ext.commands import Context
 from discord import app_commands
 from utils.cog_handler import *
+from utils.json_handler import json_load, json_save
 from utils.status import update_status
-
-json_path = "assets/config.json"
-
-def ensure_json():
-	os.makedirs(os.path.dirname(json_path), exist_ok=True)
-	if not os.path.isfile(json_path):
-		with open(json_path, "w", encoding="utf-8") as f:
-			json.dump({}, f, indent=4)
-
-def json_load():
-	ensure_json()
-	with open(json_path, "r", encoding="utf-8") as f:
-		return json.load(f)
-
-def json_save(data):
-	ensure_json()
-	with open(json_path, "w", encoding="utf-8") as f:
-		json.dump(data, f, indent=4)
 
 class admin(commands.Cog):
 	def __init__(self, bot):
@@ -151,11 +134,11 @@ class admin(commands.Cog):
 		}
 		
 		try:
-			config = json_load()
+			config = json_load("config")
 			main_config = config.setdefault("main", {})
 
 			if activity_type is None or not activity_type.strip():
-				activity_type = main_config.get("activity_type", "playing")
+				activity_type = main_config.setdefault("activity_type", "playing")
 
 			activity_type = activity_type.lower()
 
@@ -166,9 +149,9 @@ class admin(commands.Cog):
 				config.setdefault("main", {})["activity_type"] = activity_type.lower()
 			
 			if activity:
-				config.setdefault("main", {})["activity"] = activity
+				main_config["activity"] = activity
 			
-			json_save(config)
+			json_save("config", config)
 			await update_status(self.bot)
 			await ctx.send("status updated\n-# deleting..", delete_after=3)
 
@@ -185,8 +168,8 @@ class admin(commands.Cog):
 	async def say(self, ctx:Context, *, message: str) -> None:
 		words = message.split()
 		if words[0] == "uc":
-			data = json_load()
-			unichar = data.get("unichar", {})
+			data = json_load("config")
+			unichar = data.setdefault("unichar", {})
 
 			if not unichar:return await ctx.send("no emojis available, please use `say ucsetup`")
 
@@ -229,9 +212,9 @@ class admin(commands.Cog):
 			mapping = dict(zip(chars, emojis))
 
 			# load json
-			data = json_load()
+			data = json_load("config")
 			data.setdefault("unichar", {}).update(mapping)
-			json_save(data)
+			json_save("config", data)
 
 			return await ctx.send(f"added emojis for `{mode}`")
 

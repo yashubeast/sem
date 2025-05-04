@@ -1,5 +1,5 @@
 import discord, json, os
-from utils.json_handler import json_load, json_save
+from utils.json_handler import json_load
 
 async def update_status(bot):
     # load the activity type and activity from the JSON config
