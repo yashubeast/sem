@@ -1,12 +1,10 @@
 import discord, json, os
-from utils.json_handler import *
-
-json_path = "assets/config.json"
+from utils.json_handler import json_load, json_save
 
 async def update_status(bot):
     # load the activity type and activity from the JSON config
 	try:
-		config = json_load(json_path)
+		config = json_load("config")
 		main_config = config.setdefault("main", {})
 
 		activity_type_str = main_config.setdefault("activity_type", "watching")
