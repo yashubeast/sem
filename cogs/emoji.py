@@ -95,7 +95,7 @@ class emoji(commands.Cog):
 				new_name = user_input.replace(" ", "_")
 
 				if not re.fullmatch(r"[A-Za-z0-9_]{2,32}", new_name):
-					await ctx.send(f"invalid name `{new_name}` use 2-32 characters, letters, numbers, and underscores only")
+					await ctx.send(f"invalid name `{new_name}` use 2-32 characters, letters, numbers, and underscores only\n-# deleting..", delete_after=3)
 					continue
 
 				# fetch emoji image from CDN
