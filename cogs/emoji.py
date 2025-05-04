@@ -84,10 +84,9 @@ class emoji(commands.Cog):
 				
 				if user_input.lower() == "cancel":
 					cancel_embed=discord.Embed(
-						title="import cancelled", color=default_color
+						title="import cancelled", description=f"imported {successfully_added}/{len(matches)} emojis", color=default_color
 						)
-					cancel_embed.set_footer(text="deleting..")
-					await prompt_msg.edit(embed=cancel_embed, delete_after=3)
+					await prompt_msg.edit(embed=cancel_embed)
 					return
 				if user_input.lower() == "skip":
 					break
@@ -108,7 +107,7 @@ class emoji(commands.Cog):
 				# upload emoji to guild
 				try:
 					new_emoji = await ctx.guild.create_custom_emoji(name=new_name, image=image_data)
-					await ctx.send(f"emoji `{new_emoji.name}` added: {str(new_emoji)}")
+					await ctx.send(f"emoji `{new_emoji.name}` added: {str(new_emoji)}\n-# deleting..", delete_after=3)
 					successfully_added += 1
 					break
 				except discord.HTTPException as e:
