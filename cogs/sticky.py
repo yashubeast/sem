@@ -78,55 +78,52 @@ class sticky(commands.Cog):
 			active_channels.discard(channel_id)
 
 	# sticky (group)
-	@commands.hybrid_group(help="sticky message commands")
+	@commands.group(name="sticky", invoke_without_command=True, help="add/overwrite sticky message in current channel")
 	@commands.has_permissions(manage_messages=True)
-	async def sticky(eslf, ctx):
+	async def sticky(self, ctx, *, message: str = None):
 		if ctx.invoked_subcommand is None:
-			pass
+			try:
+				channel_id = str(ctx.channel.id)
 
-	# sticky create/edit
-	@sticky.command(name="create", aliases=["c"], help="new sticky message, or overwrite existing one")
-	@app_commands.describe(content="content of sticky message")
-	async def create(self, ctx, *, content: str):
-		try:
-			channel_id = str(ctx.channel.id)
+				working_channels.add(channel_id)
 
-			working_channels.add(channel_id)
+				data = json_load("sticky")
 
-			data = json_load("sticky")
+				old_sticky = data.setdefault("sticky", {}).get(channel_id)
+				if old_sticky:
+					try:
+						last_msg = await ctx.channel.fetch_message(old_sticky["last_id"])
+						await last_msg.delete()
+					except (discord.NotFound, discord.HTTPException):
+						pass
 
-			old_sticky = data.setdefault("sticky", {}).get(channel_id)
-			if old_sticky:
-				try:
-					last_msg = await ctx.channel.fetch_message(old_sticky["last_id"])
-					await last_msg.delete()
-				except (discord.NotFound, discord.HTTPException):
-					pass
+				# add channel to sticky_channels dictionary list, if it doesn't already exist
+				sticky_channels = data.setdefault("sticky", {}).setdefault("sticky_channels", [])
+				if channel_id not in sticky_channels:
+					sticky_channels.append(channel_id)
 
-			# add channel to sticky_channels dictionary list, if it doesn't already exist
-			sticky_channels = data.setdefault("sticky", {}).setdefault("sticky_channels", [])
-			if channel_id not in sticky_channels:
-				sticky_channels.append(channel_id)
+				msg = await ctx.channel.send(f"{message}")
+				data.setdefault("sticky", {})[channel_id] = {
+					"content": message,
+					"last_id": msg.id
+				}
+				json_save("sticky", data)
 
-			msg = await ctx.channel.send(f"{content}")
-			data.setdefault("sticky", {})[channel_id] = {
-				"content": content,
-				"last_id": msg.id
-			}
-			json_save("sticky", data)
-
-		finally:
-			working_channels.discard(channel_id)
+			finally:
+				working_channels.discard(channel_id)
 
 	# sticky remove
-	@sticky.command(name="remove", aliases=["r", "d", "del"], help="remove sticky message")
+	@sticky.command(name="remove", aliases=["r", "rm", "d", "del"], help="remove sticky message")
 	async def remove(self, ctx, channel: discord.TextChannel = None):
 		try:
 			target_channel = channel or ctx.channel
 			channel_id = str(target_channel.id)
 
 			data = json_load("sticky")
-			if channel_id not in data.setdefault("sticky", {}).setdefault("sticky_channels", []):return await ctx.send(f">>> no sticky message in {target_channel.mention}\n-# deleting..", delete_after=3)
+			if channel_id not in data.setdefault("sticky", {}).setdefault("sticky_channels", []):
+				await ctx.send(f">>> no sticky message in {target_channel.mention}\n-# deleting..", delete_after=5)
+				await ctx.message.delete()
+				return
 
 			working_channels.add(channel_id)
 
@@ -147,19 +144,19 @@ class sticky(commands.Cog):
 			json_save("sticky", data)
 
 			await ctx.send(f"sticky message removed{f' from {target_channel.mention}' if channel else ''}\n-# deleting...", delete_after=5)
+			await ctx.message.delete()
 
 		finally:
 			working_channels.discard(channel_id)
 
 	# sticky list
-	@sticky.command(name="list", aliases=["l"], help="list all channels with active sticky messages")
+	@sticky.command(name="list", aliases=["l"], help="list channels with active sticky messages")
 	async def list(self, ctx):
 		data = json_load("sticky")
 		sticky_data = data.setdefault("sticky", {})
 		sticky_channels = sticky_data.setdefault("sticky_channels", [])
 
-		if not sticky_channels:
-			return await ctx.send(">>> no active sticky messages\n-# deleting..", delete_after=3)
+		if not sticky_channels:return await ctx.send(">>> no active sticky messages\n-# deleting..", delete_after=5)
 
 		lines = []
 		for channel_id in sticky_channels:
