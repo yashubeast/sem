@@ -14,14 +14,14 @@ class emoji(commands.Cog):
 		print(f"{__name__} is online!")
 	
 	# emoji (group)
-	@commands.hybrid_group(help="tools for managing emojis")
+	@commands.group(help="tools for managing emojis")
 	@commands.has_permissions(administrator=True)
 	async def emoji(self, ctx):
 		if ctx.invoked_subcommand is None:
 			pass
 
 	# emoji list
-	@emoji.command(name="list", help="list all emoji accessible by bot")
+	@emoji.command(name="list", help="list all emojis accessible by bot")
 	async def list(self, ctx):
 		emojis = [str(emoji) for guild in self.bot.guilds for emoji in guild.emojis]
 
@@ -35,7 +35,7 @@ class emoji(commands.Cog):
 		await ctx.send(chunk)
 
 	# emoji import as
-	@emoji.command(name="import", help="import replied message as a emoji for prefix cmd, app cmd is useless bleh")
+	@emoji.command(name="import", help="import replied msg's content as emojis for prefix cmd")
 	@commands.has_permissions(manage_emojis_and_stickers=True)
 	@commands.bot_has_permissions(manage_emojis_and_stickers=True)
 	async def eimport(self, ctx):

@@ -34,7 +34,7 @@ class server(commands.Cog):
 		print(f"{__name__} is online!")
 
 	# server (group)
-	@commands.hybrid_group(help="tools for server listing | previews server", aliases=["s"])
+	@commands.hybrid_group(help="previews server", aliases=["s"])
 	@commands.has_permissions(administrator=True)
 	async def server(self, ctx, *, name: str = None):
 		subcommand = [cmd.name for cmd in ctx.command.commands]
@@ -140,6 +140,7 @@ class server(commands.Cog):
 		await ctx.send(embed=embed)
 		await ctx.message.delete()
 
+	# server rename
 	@server.command(name="rename", aliases=["ren"], help="rename a server")
 	@app_commands.describe(old_name="server to rename", new_name="new server name")
 	async def rename_server(self, ctx, old_name: str, *, new_name: str):
@@ -219,11 +220,12 @@ class server(commands.Cog):
 		await ctx.send("updated separators\n-# deleting..", delete_after=3)
 
 	# server initiate, send all the server messages
-	@server.command(name="initiate", aliases=["i"], help="initiate/update all server messages")
+	@server.command(name="initiate", aliases=["i"], help="initiate/update all server msgs, don't use app-cmd")
 	@commands.bot_has_permissions(manage_messages=True, read_message_history=True)
 	async def initiate(self, ctx: Context):
 		
-		await ctx.message.delete()
+		if not ctx.interaction:
+			await ctx.message.delete()
 
 		# load json
 		data = json_load("server")

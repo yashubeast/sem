@@ -16,7 +16,7 @@ class tag(commands.Cog):
 			await cursor.execute("CREATE TABLE IF NOT EXISTS tags (name TEXT, content TEXT, guild INT, creator INT)")
 
 	# tag (group)
-	@commands.hybrid_group(help="commands for tags", aliases=["t"])
+	@commands.hybrid_group(help="preview a tag", aliases=["t"])
 	async def tag(self, ctx, *, name: str = None):
 		subcommands = [cmd.name for cmd in ctx.command.commands]
 		if name and name.lower() not in subcommands:
@@ -44,7 +44,7 @@ class tag(commands.Cog):
 			await self.bot.db.commit()
 
 	# tag delete
-	@tag.command(name="delete", aliases=["d", "del"], help="delete existing tag")
+	@tag.command(name="delete", aliases=["d", "del", "r", "rm"], help="delete a tag")
 	@app_commands.describe(name="name of the tag to delete (case sensitive)")
 	@commands.has_permissions(manage_messages=True) # remove once logic added for only being able to delete ur own tags unless a admin
 	async def tagdelete(self, ctx: commands.Context, name: str):

@@ -15,21 +15,20 @@ class admin(commands.Cog):
 		print(f"{__name__} is online!")
 
 	# sync cmd
-	@commands.hybrid_command(name="sync", help="sync app commands", with_app_command=True)
-	@app_commands.describe(query="target of the sync: global or guild")
+	@commands.command(name="sync", help="sync app commands", with_app_command=True)
 	@commands.has_permissions(administrator=True)
 	async def sync(self, ctx:Context, query: str = "guild") -> None:
 		query = query.lower()
 		if query == "global":
 			await ctx.bot.tree.sync()
-			await ctx.send("slash commands globally synchronized")
+			await ctx.send("> slash commands globally synchronized")
 			return
 		elif query == "guild":
 			ctx.bot.tree.copy_global_to(guild=ctx.guild)
 			await ctx.bot.tree.sync(guild=ctx.guild)
-			await ctx.send("slash commands synchronized in current server")
+			await ctx.send("> slash commands synchronized in current server")
 			return
-		await ctx.send("query must be global or guild", ephemeral=True)
+		await ctx.send("> query must be global or guild", ephemeral=True)
 
 	# unsync
 	@commands.command(name="unsync", help="unsync app commands")
@@ -39,37 +38,37 @@ class admin(commands.Cog):
 		query = query.lower()
 		if query == "global":
 			ctx.bot.tree.clear_commands(guild=None)
-			await ctx.send("slash commands globally unsynchronized")
+			await ctx.send("> slash commands globally unsynchronized")
 			return
 		elif query == "guild":
 			ctx.bot.tree.clear_commands(guild=ctx.guild)
-			await ctx.send("slash commands unsynchronized in current server")
+			await ctx.send("> slash commands unsynchronized in current server")
 			return
-		await ctx.send("query must be global or guild")
+		await ctx.send("> query must be global or guild")
 
 	# re-sync
 	@commands.command(name="resync", help="re-sync app commands")
 	@app_commands.describe(query="target of the re-sync: global or guild")
 	@commands.has_permissions(administrator=True)
 	async def resync(self, ctx: Context, query: str = "guild") -> None:
+		prompt = ctx.send("> hollon..")
 		query = query.lower()
 		if query == "global":
 			ctx.bot.tree.clear_commands(guild=None)
-			await asyncio.sleep(3)
+			await asyncio.sleep(5)
 			await ctx.bot.tree.sync()
-			await ctx.send("slash commands globally re-synchronized")
+			await prompt.edit(content="> slash commands globally re-synchronized")
 			return
 		elif query == "guild":
 			ctx.bot.tree.clear_commands(guild=ctx.guild)
-			await asyncio.sleep(3)
+			await asyncio.sleep(5)
 			await ctx.bot.tree.sync(guild=ctx.guild)
-			await ctx.send("slash commands re-synchronized in current server")
+			await prompt.edit("> slash commands re-synchronized in current server")
 			return
-		await ctx.send("query must be global or guild")
+		await prompt.edit("> query must be global or guild")
 
 	# cog
-	@commands.hybrid_command(name="cog", help="load/unload/reload cogs")
-	@app_commands.describe(action="list, load, unload, reload", cog="cog name, * for all")
+	@commands.command(name="cog", help="load/unload/reload cogs")
 	@commands.has_permissions(administrator=True)
 	async def cog(self, ctx, action: str = None, cog: str = None):
 		if not action or action.lower() == "list":
@@ -162,7 +161,7 @@ class admin(commands.Cog):
 			await ctx.send("error reading the json file")
 
 	# say cmd
-	@commands.command(name="say", help="make bot send a message, sub-command: uc")
+	@commands.command(name="say", help="make bot send a message")
 	@commands.has_permissions(administrator=True)
 	@commands.bot_has_permissions(manage_messages=True)
 	async def say(self, ctx:Context, *, message: str) -> None:
@@ -222,7 +221,7 @@ class admin(commands.Cog):
 		await ctx.message.delete()
 
 	# sendembed cmd
-	@commands.hybrid_command(name="sendembed", help="make the bot send custom embed")
+	@commands.hybrid_command(name="sendembed", help="make bot send custom embed")
 	@app_commands.describe(
 		title="title of the embed",
 		description="description of the embed",
