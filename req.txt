@@ -15,4 +15,6 @@ python-dotenv==1.0.1
 pywin32==310
 six==1.17.0
 typing_extensions==4.12.2
+uuid==1.30
 yarl==1.18.0
+yt-dlp==2025.4.30
