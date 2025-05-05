@@ -51,7 +51,7 @@ class admin(commands.Cog):
 	@app_commands.describe(query="target of the re-sync: global or guild")
 	@commands.has_permissions(administrator=True)
 	async def resync(self, ctx: Context, query: str = "guild") -> None:
-		prompt = ctx.send("> hollon..")
+		prompt = await ctx.send("> hollon..")
 		query = query.lower()
 		if query == "global":
 			ctx.bot.tree.clear_commands(guild=None)
@@ -63,9 +63,9 @@ class admin(commands.Cog):
 			ctx.bot.tree.clear_commands(guild=ctx.guild)
 			await asyncio.sleep(5)
 			await ctx.bot.tree.sync(guild=ctx.guild)
-			await prompt.edit("> slash commands re-synchronized in current server")
+			await prompt.edit(content="> slash commands re-synchronized in current server")
 			return
-		await prompt.edit("> query must be global or guild")
+		await prompt.edit(content="> query must be global or guild")
 
 	# cog
 	@commands.command(name="cog", help="load/unload/reload cogs")
