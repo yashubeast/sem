@@ -84,8 +84,15 @@ class sticky(commands.Cog):
 		if ctx.invoked_subcommand is None:
 			try:
 				channel_id = str(ctx.channel.id)
-
 				working_channels.add(channel_id)
+
+				if ctx.message.reference and message is None:
+					message = ctx.message.reference.resolved.content
+
+				if message is None:
+					await ctx.send(">>> please provide a message, or reply to one\n-# deleting..", delete_after=3)
+					await ctx.message.delete()
+					return
 
 				data = json_load("sticky")
 
@@ -103,6 +110,11 @@ class sticky(commands.Cog):
 					sticky_channels.append(channel_id)
 
 				msg = await ctx.channel.send(f"{message}")
+
+				if ctx.message.reference:
+					await ctx.message.reference.resolved.delete()
+				await ctx.message.delete()
+
 				data.setdefault("sticky", {})[channel_id] = {
 					"content": message,
 					"last_id": msg.id
