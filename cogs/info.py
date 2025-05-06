@@ -37,9 +37,13 @@ class info(commands.Cog):
 	
 	# info (group)
 	@commands.hybrid_group(help="tools for info and stats")
-	async def info(eslf, ctx):
+	async def info(self, ctx):
 		if ctx.invoked_subcommand is None:
-			pass
+			guilds_list = [guild.name for guild in self.bot.guilds]
+
+			if guilds_list:
+				guilds_str = "\n".join(guilds_list)
+				await ctx.send(">>> " + guilds_str)
 
 	# info server
 	@info.command(name="server", help="info on current server")
