@@ -3,7 +3,6 @@ from discord.ext import commands
 from discord import app_commands
 from utils.json_handler import json_load, json_save
 
-json_file_path = "assets/sticky.json"
 active_channels = set()
 working_channels = set()
 
