@@ -28,7 +28,10 @@ async def on_command_error(ctx, error):
 	elif isinstance(error, commands.CommandNotFound):
 		return
 	else:
-		await ctx.send(f":warning: error :warning: contact yasu ```py\n{error}```")
+		if str(error).startswith("The check functions for command"):
+			await ctx.send("command not allowed for this aah server\n-# deleting..", delete_after=3)
+		else:
+			await ctx.send(f":warning: error :warning: contact yasu ```py\n{error}```")
 
 async def main():
 	async with bot:
