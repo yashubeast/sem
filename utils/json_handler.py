@@ -3,7 +3,8 @@ import json, os
 predefined_json_paths = {
 	"config": "assets/config.json",
 	"server": "assets/server.json",
-	"sticky": "assets/sticky.json"
+	"sticky": "assets/sticky.json",
+	"dynamicvc": "assets/dynamicvc.json"
 }
 
 def resolve_json_path(json_path):
