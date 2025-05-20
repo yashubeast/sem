@@ -19,9 +19,9 @@ class mod(commands.Cog):
 		if role in member.roles:
 			await member.remove_roles(role)
 			await ctx.send(f">>> {role.name} removed from {member.name} {reason if reason else ''}")
-			if ctx.prefix:
+			try:
 				await ctx.message.delete()
-			return
+			finally:return
 
 		await member.add_roles(role)
 		await ctx.send(f">>> {role.name} given to {member.name} {reason if reason else ''}")
