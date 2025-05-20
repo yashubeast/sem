@@ -19,12 +19,12 @@ class mod(commands.Cog):
 		try:
 			if role in member.roles:
 				await member.remove_roles(role)
-				await ctx.send(f">>> {role.mention} removed from {member.mention} {reason if reason else ''}", allowed_mentions=discord.AllowedMentions(roles=False))
+				await ctx.send(f">>> {member.mention} has been stripped of the {role.mention} role {reason if reason else ''}", allowed_mentions=discord.AllowedMentions(roles=False))
 				try:await ctx.message.delete()
 				finally:return
 
 			await member.add_roles(role)
-			await ctx.send(f">>> {role.mention} given to {member.mention} {reason if reason else ''}", allowed_mentions=discord.AllowedMentions(roles=False))
+			await ctx.send(f">>> {member.mention} has been granted the {role.mention} role {reason if reason else ''}", allowed_mentions=discord.AllowedMentions(roles=False))
 
 			try:await ctx.message.delete()
 			finally:return
