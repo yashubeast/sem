@@ -26,8 +26,9 @@ class mod(commands.Cog):
 		await member.add_roles(role)
 		await ctx.send(f">>> {role.name} given to {member.name} {reason if reason else ''}")
 
-		if ctx.prefix:
+		try:
 			await ctx.message.delete()
+		finally:return
 
 	# delete command	
 	@commands.command(name="delete", aliases = ["d", "del"], help="purge messages")
