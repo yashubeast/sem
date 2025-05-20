@@ -1,31 +1,7 @@
 import discord, asyncio
-from discord.ext import commands
-from discord.ext.commands import Context
 from discord import app_commands
-from datetime import datetime, timezone
-from dateutil.relativedelta import relativedelta
-
-default_color = discord.Color.from_rgb(241, 227, 226)
-
-def format_date_with_suffix(date):
-	day = date.day
-	suffix = "th" if 11 <= day <= 13 else {1: "st", 2: "nd", 3: "rd"}.get(day % 10, "th")
-	return date.strftime(f"{day}{suffix} %b, %Y").lower()
-
-def time_ago(date):
-	now = datetime.now(timezone.utc)
-	delta = relativedelta(now, date)
-
-	parts = []
-
-	if delta.years:
-		parts.append(f"{delta.years} year{'s' if delta.years != 1 else ''}")
-	if delta.months:
-		parts.append(f"{delta.months} month{'s' if delta.months != 1 else ''}")
-	if delta.days:
-		parts.append(f"{delta.days} day{'s' if delta.days != 1 else ''}")
-
-	return f"({', '.join(parts)} ago)" if parts else "(today)"
+from discord.ext import commands
+from utils.info import *
 
 class info(commands.Cog):
 	def __init__(self, bot):
@@ -35,54 +11,85 @@ class info(commands.Cog):
 	async def on_ready(self):
 		print(f"{__name__} is online!")
 	
-	# info (group)
-	@commands.hybrid_group(help="tools for info and stats")
-	async def info(self, ctx):
-		if ctx.invoked_subcommand is None:
+	# info
+	@commands.hybrid_command(help="universal info cmd (server, user)", aliases=["i"])
+	async def info(self, ctx, *, query: str = None):
+
+		# info bot
+		if not query:
 			guilds = self.bot.guilds
+			await ctx.send(await info_servers(guilds))
+			return
 
-			if guilds:
-				guilds_str = "\n".join(f"[{g.name}](https://discord.com/channels/{g.id})" for g in guilds)
-				await ctx.send(f"### total servers: {len(guilds)}\n>>> " + guilds_str)
-			else:
-				await ctx.send("bot is not in any servers")
+		# parting
+		parts = query.split()
+		sent_ids = set()
 
-	# info server
-	@info.command(name="server", help="info on current server")
-	async def server(self, ctx):
-		guild = ctx.guild
-		embed = discord.Embed(
-			title=guild.name,
-			color=default_color
-			)
-		if guild.icon:
-			embed.set_thumbnail(url=guild.icon.url)
+		for part in parts:
+			member = None
 
-		embed.add_field(name="members", value=guild.member_count)
-		embed.add_field(name="channels", value=f"{len(guild.channels)}")
-		embed.add_field(name=f"roles", value=f"{len(guild.roles)}")
-		embed.add_field(name=f"created on", value=f"{format_date_with_suffix(guild.created_at)}\n-# {time_ago(guild.created_at)}", inline=False)
-		
-		await ctx.send(embed=embed)
+			# check for server
+			if part.lower() == "server" and "server" not in sent_ids:
+				embed = await info_server(ctx)
+				await ctx.send(embed=embed)
+				sent_ids.add("server")
+				continue
 
-	# info user
-	@info.command(name="user", help="info on specified user")
-	@app_commands.describe(user="user to look info on, provide any one: mention, user_id, display name, nickname, unique name")
-	async def user(self, ctx, user: discord.User = None):
-		user = user or ctx.author # default to command initiator if not user given
-		member = ctx.guild.get_member(user.id)
-		embed = discord.Embed(
-			title=f"{user.name} ({user.display_name})",
-			color=default_color,
-		)
+			# check for @mention
+			if part.startswith("<@") and part.endswith(">"):
+				user_id = part.strip("<@!>")
+				if user_id.isdigit():
+					member = ctx.guild.get_member(int(user_id))
+					if not member:
+						try:
+							member = await ctx.bot.fetch_user(int(user_id))
+						except:
+							pass
+			
+			# check for user id
+			elif part.isdigit():
+				member = ctx.guild.get_member(int(part))
+				if not member:
+					try:
+						member = await ctx.bot.fetch_user(int(part))
+					except:
+						pass
+			
+			# try name or nick
+			if not member:
+				member = discord.utils.find(
+					lambda m: part.lower() in (m.name.lower(), m.display_name.lower()),
+					ctx.guild.members
+				)
 
-		embed.set_thumbnail(url=user.avatar.url if user.avatar else user.default_avatar.url)
-		# embed.add_field(name="top role", value=f"{member.top_role}")
-		embed.add_field(name="roles", value=f"{len(member.roles)}", inline=False)
-		embed.add_field(name="joined on", value=f"{format_date_with_suffix(member.joined_at)}\n-# {time_ago(member.joined_at)}")
-		embed.add_field(name=f"created on", value=f"{format_date_with_suffix(user.created_at)}\n-# {time_ago(user.created_at)}")
+			# if checked and not already sent
+			if member and member.id not in sent_ids:
+				embed = await info_user(ctx, member)
+				await ctx.send(embed=embed)
+				sent_ids.add(member.id)
+				continue
+			
+			# check for roles
+			role = None
+			if part.startswith("<@&") and part.endswith(">"):
+				role_id = part.strip("<@&>")
+				if role_id .isdigit():
+					role = ctx.guild.get_role(int(role_id))
+			
+			elif part.isdigit():
+				role = ctx.guild.get_role(int(part))
+			
+			if not role:
+				role = discord.utils.find(
+					lambda r: part.lower() in r.name.lower(),
+					ctx.guild.roles
+				)
 
-		await ctx.send(embed=embed)
+			if role and role.id not in sent_ids:
+				embed = await info_role(ctx, role)
+				await ctx.send(embed=embed)
+				sent_ids.add(role.id)
+				continue
 
 	# test command
 	@commands.command(name="test")
