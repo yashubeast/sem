@@ -18,13 +18,13 @@ class mod(commands.Cog):
 	async def role(self, ctx, member: discord.Member, role: discord.Role, *, reason: str = None):
 		if role in member.roles:
 			await member.remove_roles(role)
-			await ctx.send(f">>> {role.name} removed from {member.name} {reason}")
+			await ctx.send(f">>> {role.name} removed from {member.name} {reason if reason else ''}")
 			if ctx.prefix:
 				await ctx.message.delete()
 			return
 
 		await member.add_roles(role)
-		await ctx.send(f">>> {role.name} given to {member.name} {reason}")
+		await ctx.send(f">>> {role.name} given to {member.name} {reason if reason else ''}")
 
 		if ctx.prefix:
 			await ctx.message.delete()

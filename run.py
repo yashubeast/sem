@@ -25,6 +25,8 @@ async def on_command_error(ctx, error):
 		await ctx.send("contact yasu, json file not found")
 	elif isinstance(error, json.JSONDecodeError):
 		await ctx.send("contact yasu, error reading json file")
+	elif isinstance(error, discord.Forbidden):
+		await ctx.send("contact yasu, bot lacks perms")
 	elif isinstance(error, commands.CommandNotFound):
 		return
 	else:
