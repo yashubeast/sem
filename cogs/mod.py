@@ -11,6 +11,24 @@ class mod(commands.Cog):
 	async def on_ready(self):
 		print(f"{__name__} is online!")
 
+	# role
+	@commands.hybrid_command(name="role", help="manage user roles", aliases=["r"])
+	@commands.has_permissions(manage_roles=True)
+	@commands.bot_has_permissions(manage_roles=True)
+	async def role(self, ctx, member: discord.Member, role: discord.Role, *, reason: str = None):
+		if role in member.roles:
+			await member.remove_roles(role)
+			await ctx.send(f">>> {role.name} removed from {member.name} {reason}")
+			if ctx.prefix:
+				await ctx.message.delete()
+			return
+
+		await member.add_roles(role)
+		await ctx.send(f">>> {role.name} given to {member.name} {reason}")
+
+		if ctx.prefix:
+			await ctx.message.delete()
+
 	# delete command	
 	@commands.command(name="delete", aliases = ["d", "del"], help="purge messages")
 	@commands.has_permissions(manage_messages=True)
