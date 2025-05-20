@@ -39,11 +39,13 @@ class info(commands.Cog):
 	@commands.hybrid_group(help="tools for info and stats")
 	async def info(self, ctx):
 		if ctx.invoked_subcommand is None:
-			guilds_list = [guild.name for guild in self.bot.guilds]
+			guilds = self.bot.guilds
 
-			if guilds_list:
-				guilds_str = "\n".join(guilds_list)
-				await ctx.send(">>> " + guilds_str)
+			if guilds:
+				guilds_str = "\n".join(f"[{g.name}](https://discord.com/channels/{g.id})" for g in guilds)
+				await ctx.send(f"### total servers: {len(guilds)}\n>>> " + guilds_str)
+			else:
+				await ctx.send("bot is not in any servers")
 
 	# info server
 	@info.command(name="server", help="info on current server")

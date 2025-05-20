@@ -30,7 +30,7 @@ class general(commands.Cog):
 
 		embed = discord.Embed(
 			title="wikipedia",
-			description="commands starting:\nwith `,` are *prefix-cmd only*\nwith `/` are *app-cmd only*\nwith `nothing` are both prefix and app cmd",
+			description="commands starting with:\n`,` are *prefix-cmd only*\n`/` are *app-cmd only*\n`nothing` are both prefix and app-cmd",
 			color=default_color
 		)
 
