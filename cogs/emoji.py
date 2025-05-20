@@ -66,6 +66,7 @@ class emoji(commands.Cog):
 
 			else:
 				try:
+					if not location.isdigit():return await ctx.send(">>> invalid server id")
 					target_guild = self.bot.get_guild(int(location))
 					if not target_guild:return await ctx.send(">>> invalid server id")
 				except ValueError:return await ctx.send(">>> invalid server id")
