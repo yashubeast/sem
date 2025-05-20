@@ -47,7 +47,7 @@ class universium(commands.Cog):
 			await vc.set_permissions(everyone, overwrite=current_overwrite)
 
 	# dynamicvc
-	@commands.hybrid_command(help="toggle dynamic vc", aliases="dvc")
+	@commands.hybrid_command(help="toggle dynamic vc", aliases=["dvc"])
 	@commands.has_permissions(administrator=True)
 	async def dynamicvc(self, ctx, channel: discord.VoiceChannel = None):
 		data = json_load("dynamicvc")
