@@ -16,19 +16,22 @@ class mod(commands.Cog):
 	@commands.has_permissions(manage_roles=True)
 	@commands.bot_has_permissions(manage_roles=True)
 	async def role(self, ctx, member: discord.Member, role: discord.Role, *, reason: str = None):
-		if role in member.roles:
-			await member.remove_roles(role)
-			await ctx.send(f">>> {role.name} removed from {member.name} {reason if reason else ''}")
-			try:
-				await ctx.message.delete()
+		try:
+			if role in member.roles:
+				await member.remove_roles(role)
+				await ctx.send(f">>> {role.name} removed from {member.nick or member.name} {reason if reason else ''}")
+				try:await ctx.message.delete()
+				finally:return
+
+			await member.add_roles(role)
+			await ctx.send(f">>> {role.name} given to {member.nick or member.name} {reason if reason else ''}")
+
+			try:await ctx.message.delete()
 			finally:return
 
-		await member.add_roles(role)
-		await ctx.send(f">>> {role.name} given to {member.name} {reason if reason else ''}")
-
-		try:
-			await ctx.message.delete()
-		finally:return
+		finally:
+			try:await ctx.message.delete()
+			finally:return
 
 	# delete command	
 	@commands.command(name="delete", aliases = ["d", "del"], help="purge messages")

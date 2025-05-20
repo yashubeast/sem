@@ -29,6 +29,8 @@ async def on_command_error(ctx, error):
 		await ctx.send("contact yasu, bot lacks perms")
 	elif isinstance(error, commands.CommandNotFound):
 		return
+	elif str(error).startswith("Role") and str(error).endswith("not found."):
+		await ctx.send(f">>> role doesn't exist")
 	else:
 		if str(error).startswith("The check functions for command"):
 			await ctx.send("command not allowed for this aah server\n-# deleting..", delete_after=3)
