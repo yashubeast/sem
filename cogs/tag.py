@@ -17,7 +17,7 @@ class tag(commands.Cog):
 		subcommands = [cmd.name for cmd in ctx.command.commands]
 		if name and name.lower() not in subcommands:
 			async with self.bot.db.cursor() as cursor:
-				await cursor.execute("SELECT content FROM tags WHERE guild = ? AND name = ?", (ctx.guild.id, name))
+				await cursor.execute("SELECT content FROM tags WHERE gid = ? AND name = ?", (ctx.guild.id, name))
 				data = await cursor.fetchone()
 				if data:
 					await ctx.send(data[0])
@@ -29,10 +29,10 @@ class tag(commands.Cog):
 	@app_commands.describe(name="name of the tag (case sensitive)", content="content for the tag")
 	async def create(self, ctx: commands.Context, name: str, *, content: str):
 		async with self.bot.db.cursor() as cursor:
-			await cursor.execute("SELECT content FROM tags WHERE guild = ? AND name = ?", (ctx.guild.id, name))
+			await cursor.execute("SELECT content FROM tags WHERE gid = ? AND name = ?", (ctx.guild.id, name))
 			data = await cursor.fetchone()
 			if data is None:
-				await cursor.execute("INSERT INTO tags (name, content, guild, creator) VALUES (?, ?, ?, ?)", (name, content, ctx.guild.id, ctx.author.id))
+				await cursor.execute("INSERT INTO tags (name, content, gid, cid) VALUES (?, ?, ?, ?)", (name, content, ctx.guild.id, ctx.author.id))
 				await ctx.send(f"tag `{name}` created")
 			if data:
 				await ctx.send(f"tag `{name}` already exists")
@@ -45,10 +45,10 @@ class tag(commands.Cog):
 	@commands.has_permissions(manage_messages=True) # remove once logic added for only being able to delete ur own tags unless a admin
 	async def tagdelete(self, ctx: commands.Context, name: str):
 		async with self.bot.db.cursor() as cursor:
-			await cursor.execute("SELECT name FROM tags WHERE guild = ? AND name = ?", (ctx.guild.id, name))
+			await cursor.execute("SELECT name FROM tags WHERE gid = ? AND name = ?", (ctx.guild.id, name))
 			data = await cursor.fetchone()
 			if data:
-				await cursor.execute("DELETE FROM tags WHERE name = ? AND guild = ?", (name, ctx.guild.id))
+				await cursor.execute("DELETE FROM tags WHERE name = ? AND gid = ?", (name, ctx.guild.id))
 				await ctx.send(f"tag `{name}` deleted")
 			else:
 				await ctx.send(f"tag `{name}` doesn't exist")
@@ -59,7 +59,7 @@ class tag(commands.Cog):
 	@tag.command(name="list", aliases=["l"], help="list all tags")
 	async def list(self, ctx: commands.Context):
 		async with self.bot.db.cursor() as cursor:
-			await cursor.execute("SELECT name FROM tags WHERE guild = ?", (ctx.guild.id,))
+			await cursor.execute("SELECT name FROM tags WHERE gid = ?", (ctx.guild.id,))
 			data = await cursor.fetchall()
 		if not data:
 			await ctx.send("no tags in server")
