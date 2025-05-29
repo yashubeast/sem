@@ -61,7 +61,7 @@ class emoji(commands.Cog):
 		# ensure admin if location provided
 		if location:
 			if location.lower() == "bot":
-				if not checkadmin(ctx):return await ctx.send(">>> yo aah ain't sem's admin for ts :wilted:")
+				if not checkadmin(ctx):return await ctx.send(">>> yo aah ain't sem's admin for ts :wilted_rose:")
 				target = self.bot.create_application_emoji
 
 			else:
