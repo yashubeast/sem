@@ -37,7 +37,7 @@ class tag(commands.Cog):
 			if data:
 				await ctx.send(f"tag `{name}` already exists")
 			
-			await self.bot.db.commit()
+			await cursor.commit()
 
 	# tag delete
 	@tag.command(name="delete", aliases=["d", "del", "r", "rm"], help="delete a tag")
