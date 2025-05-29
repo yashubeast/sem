@@ -1,4 +1,4 @@
-import discord, os, asyncio, json
+import discord, os, asyncio, json, aiosqlite
 from discord.ext import commands
 from dotenv import load_dotenv
 from utils.cog_handler import load_all_cogs
@@ -37,9 +37,27 @@ async def on_command_error(ctx, error):
 		else:
 			await ctx.send(f">>> :warning: error :warning: contact yasu ```py\n{error}```")
 
+async def database():
+	os.makedirs("assets", exist_ok=True)
+	bot.db = await aiosqlite.connect("assets/main.db")
+
+	async with bot.db.cursor() as cursor:
+		await cursor.execute("""
+			CREATE TABLE IF NOT EXISTS tags(
+				name TEXT,
+				content TEXT,
+				guild INT,
+				creator INT
+			)
+		""")
+	
+	await bot.db.commit()
+
 async def main():
 	async with bot:
+		await database()
 		await load_all_cogs(bot)
 		await bot.start(os.getenv("TOKEN"))
+	await bot.db.close()
 
 asyncio.run(main())

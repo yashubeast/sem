@@ -1,4 +1,4 @@
-import discord
+import discord, aiosqlite
 from discord.ext import commands
 from discord.ext.commands import Context
 from discord import app_commands
@@ -11,9 +11,13 @@ class universium(commands.Cog):
 	@commands.Cog.listener()
 	async def on_ready(self):
 		print(f"{__name__} is online!")
+		self.bot.db = await aiosqlite.connect("assets/main.db")
 	
-	################################################
-	################################################
+	####
+	####
+	#### dynamic vc
+	####
+	####
 
 	# listener for dynamic vc
 	@commands.Cog.listener()
@@ -94,8 +98,36 @@ class universium(commands.Cog):
 		
 		json_save("dynamicvc", data)
 
-	################################################
-	################################################
+	####
+	####
+	#### vc status
+	####
+	####
+
+	# vc status
+	# self.role_name = "In VC"  # change to your VC indicator role name
+	# @commands.Cog.listener()
+	# async def on_voice_state_update(self, member: discord.Member, before: discord.VoiceState, after: discord.VoiceState):
+	# 	guild = member.guild
+	# 	async with db.execute("SELECT role_id FROM autoroles WHERE guild_id = ?", (guild.id,)) as cursor:
+	# 		row = await cursor.fetchone()
+	# 		if row:
+	# 			role_id = int(row[0])
+	# 			return guild.get_role(role_id)
+	# 		return None
+	# 	role = guild.get_role(self.role_id)
+	# 	if not role:
+	# 		return  # role doesn't exist
+
+	# 	# user joined a vc
+	# 	if not before.channel and after.channel:
+	# 		if role not in member.roles:
+	# 			await member.add_roles(role, reason="user joined a vc")
+
+	# 	# user left vc
+	# 	elif before.channel and not after.channel:
+	# 		if role in member.roles:
+	# 			await member.remove_roles(role, reason="user left all vcs")
 
 async def setup(bot):
 	await bot.add_cog(universium(bot))

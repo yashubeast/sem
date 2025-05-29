@@ -10,10 +10,6 @@ class tag(commands.Cog):
 	@commands.Cog.listener()
 	async def on_ready(self):
 		print(f"{__name__} is online!")
-		os.makedirs("assets", exist_ok=True)
-		self.bot.db = await aiosqlite.connect("assets/main.db")
-		async with self.bot.db.cursor() as cursor:
-			await cursor.execute("CREATE TABLE IF NOT EXISTS tags (name TEXT, content TEXT, guild INT, creator INT)")
 
 	# tag (group)
 	@commands.hybrid_group(help="preview a tag", aliases=["t"])

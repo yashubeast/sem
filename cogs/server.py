@@ -468,9 +468,6 @@ class server(commands.Cog):
 			if user and message.author.id != user.id:
 				continue
 
-			if exclude and exclude in message.content:
-				continue
-
 			if not found_from:
 				if message.id == int(from_id):
 					found_from = True
@@ -484,6 +481,30 @@ class server(commands.Cog):
 			await ctx.send("no server messages imported")
 			return
 
+		# if no exclude text provided, ask for it
+		if exclude is None:
+			exclude_prompt = await ctx.send("reply to a message to be excluded (usually separator msg) or type `skip` to exclude nothing")
+		
+		def reply_check(m):
+			return m.author == ctx.author and m.channel == ctx.channel
+
+		try:
+			reply = await self.bot.wait_for("message", check=reply_check, timeout=60)
+
+			if reply.content.lower() != "skip" and reply.reference:
+				replied_message = await ctx.channel.fetch_message(reply.reference.message_id)
+				exclude = replied_message.content
+				await ctx.send(f"messages containing this will be excluded: `{exclude}`")
+			elif reply.content.lower() == "skip":
+				await ctx.send("no messages will be excluded")
+			else:
+				await ctx.send("invalid reply or no reference, continuing without excluding messages")
+		except asyncio.TimeoutError:
+			await ctx.send("timed out waiting for exclude message, continuing without excluding")
+
+		if exclude:
+			collected_messages = [m for m in collected_messages if exclude not in m.content]
+
 		naming_msg = await ctx.send("starting bulk naming..")
 
 		for msg in reversed(collected_messages):
@@ -494,6 +515,10 @@ class server(commands.Cog):
 		
 			try:
 				reply = await self.bot.wait_for("message", check=check, timeout=60)
+				if reply.content.lower() == "skip":
+					await asyncio.sleep(0.5)
+					await reply.delete()
+					continue
 				final_messages.append({reply.content: msg.content})
 				await asyncio.sleep(0.5)
 				await reply.delete()
