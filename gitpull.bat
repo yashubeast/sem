@@ -13,7 +13,7 @@ REM get local HEAD after pulling
 for /f "delims=" %%i in ('git rev-parse HEAD') do set AFTER=%%i
 
 REM show log only if updated
-if not "%BEFORE%"=="%AFTER%" (
+if "%BEFORE%"=="%AFTER%" (
     echo ==== New Commits Pulled ====
     git log --oneline %BEFORE%..%AFTER%
 ) else(
