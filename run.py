@@ -20,7 +20,7 @@ async def on_command_error(ctx, error):
 	elif isinstance(error, commands.MissingRequiredArgument):
 		await ctx.send(">>> missing a required arg\n-# deleting..", delete_after=3)
 	elif isinstance(error, commands.BotMissingPermissions):
-		await ctx.send(">>> i lack perms for ts :wilted:")
+		await ctx.send(">>> i lack perms for ts :wilted_rose:")
 	elif isinstance(error, FileNotFoundError):
 		await ctx.send(">>> contact yasu, json file not found")
 	elif isinstance(error, json.JSONDecodeError):
@@ -40,14 +40,28 @@ async def on_command_error(ctx, error):
 async def database():
 	os.makedirs("assets", exist_ok=True)
 	bot.db = await aiosqlite.connect("assets/main.db")
+	await bot.db.execute("PRAGMA journal_mode=WAL")
 
 	async with bot.db.cursor() as cursor:
 		await cursor.execute("""
 			CREATE TABLE IF NOT EXISTS tags(
 				name TEXT,
 				content TEXT,
-				guild INT,
-				creator INT
+				gid INT,
+				cid INT
+			)
+		""")
+		await cursor.execute("""
+			CREATE TABLE IF NOT EXISTS servers(
+			 	pos INTEGER UNIQUE,
+				name TEXT UNIQUE,
+				content TEXT
+			)
+		""")
+		await cursor.execute("""
+			CREATE TABLE IF NOT EXISTS servers_msgs(
+			pos INTEGER PRIMARY KEY,
+			mid TEXT NOT NULL
 			)
 		""")
 	
