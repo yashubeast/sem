@@ -16,6 +16,6 @@ REM show log only if updated
 if "%BEFORE%"=="%AFTER%" (
     echo nothing
 ) else (
-    echo ==== New Commits Pulled ====
+    echo ==== new commits pulled ====
     git log --oneline %BEFORE%..%AFTER%
 )

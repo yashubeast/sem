@@ -233,6 +233,7 @@ class admin(commands.Cog):
 			text=True
 		)
 		output = result.stdout or result.stderr
+		await reload_all_cogs(self.bot)
 		await ctx.send(f">>> ```py\n{output[:1900]}\n```")
 	
 	# py
