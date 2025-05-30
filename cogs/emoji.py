@@ -125,7 +125,7 @@ class emoji(commands.Cog):
 
 		response = ""
 		if successes:
-			response += f">>> removed: {'\n'.join(successes)}\n\n"
+			response += f">>> removed:\n" + "\n".join(successes) + "\n\n"
 		if failures:
 			response += f"failed: {', '.join(failures)}"
 
