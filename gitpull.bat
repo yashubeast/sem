@@ -14,7 +14,7 @@ for /f "delims=" %%i in ('git rev-parse HEAD') do set AFTER=%%i
 
 REM show log only if updated
 if "%BEFORE%"=="%AFTER%" (
-    echo nothing
+    echo at latest commits
 ) else (
     echo ==== new commits pulled ====
     git log --oneline %BEFORE%..%AFTER%
