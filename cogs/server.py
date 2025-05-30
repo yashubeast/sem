@@ -299,8 +299,6 @@ class server(commands.Cog):
 			try:
 				if message_id:
 					message = await ctx.channel.fetch_message(int(message_id))
-					print("old\n", repr(message.content))
-					print("new\n", new_content)
 					if message.content.strip() != new_content.strip():
 						await message.edit(content=new_content)
 						return await ctx.send(f"update content for `{query}`")
