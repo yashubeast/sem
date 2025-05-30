@@ -1,9 +1,8 @@
-import discord, json, os, asyncio
+import discord, asyncio
 from discord.ext import commands
 from discord.ext.commands import Context
 from discord import app_commands
 from typing import Tuple
-from utils.json_handler import json_load, json_save
 from utils.values import default_color, checkserver
 
 def build_message_sequences(contents, separator, use_separators, include_edges):
