@@ -7,7 +7,7 @@ REM get local HEAD before pulling
 for /f "delims=" %%i in ('git rev-parse HEAD') do set BEFORE=%%i
 
 REM pull latest commits
-git pull origin main >nul 2>&1
+git pull origin main > NUL 2>&1
 
 REM get local HEAD after pulling
 for /f "delims=" %%i in ('git rev-parse HEAD') do set AFTER=%%i
