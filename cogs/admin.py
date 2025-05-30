@@ -1,10 +1,11 @@
-import discord, traceback, asyncio, json, re
+import discord, traceback, asyncio, json, re, contextlib, io
 from discord.ext import commands
 from discord.ext.commands import Context
 from discord import app_commands
 from utils.cog_handler import *
 from utils.json_handler import json_load, json_save
 from utils.status import update_status
+from utils.values import checkadmin
 
 class admin(commands.Cog):
 	def __init__(self, bot):
@@ -219,6 +220,26 @@ class admin(commands.Cog):
 
 		await ctx.send(message)
 		await ctx.message.delete()
+	
+	# py
+	@commands.command(name="py", help="execute python code")
+	async def py(self, ctx, *, code: str = None):
+		if not checkadmin(ctx):return await ctx.send(">>> yo aah ain't sem's admin for ts :wilted_rose:")
+
+		if not code:
+			if ctx.message.reference:
+				replied = await ctx.channel.fetch_message(ctx.message.reference.message_id)
+				code = replied.content
+			else:
+				return await ctx.send("> provide code or reply with empty msg to a message containing code")
+
+		code = re.sub(r"^```(?:py)?\n([\s\S]*?)\n?```$", r"\1", code.strip())
+		str_io = io.StringIO()
+
+		with contextlib.redirect_stdout(str_io):
+			exec(code, {})
+		output = str_io.getvalue()
+		await ctx.send(f">>> {output or 'no output'}")
 
 	# sendembed cmd
 	@commands.hybrid_command(name="sendembed", help="make bot send custom embed")
