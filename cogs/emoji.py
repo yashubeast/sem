@@ -17,28 +17,75 @@ class emoji(commands.Cog):
 	# emoji (group)
 	@commands.group(help="tools for managing emojis")
 	@commands.has_permissions(administrator=True)
-	async def emoji(self, ctx):
+	async def emoji(self, ctx, *, servers: str):
 		if ctx.invoked_subcommand is None:
-			pass
+			inputs = [s.strip() for s in servers.split(",")]
+			results = []
+
+			# emoji limits by nitro level
+			tier_limits = {
+				0: 50,
+				1: 100,
+				2: 150,
+				3: 250
+			}
+
+			for identifier in inputs:
+				guild = None
+
+				# try to get by id
+				if identifier.isdigit():
+					guild = discord.utils.get(self.bot.guilds, id=int(identifier))
+
+				# try to get by name
+				if not guild:
+					guild = discord.utils.find(lambda g: g.name.lower() == identifier.lower(), self.bot.guilds)
+
+				if not guild:
+					results.append(f"> server named `{identifier}` not found")
+					continue
+
+				limit = tier_limits.get(guild.premium_tier, 50)
+				emojis = guild.emojis
+				static_count = sum(not e.animated for e in emojis)
+				animated_count = sum(e.animated for e in emojis)
+
+				await ctx.send(
+					f">>> {guild.name} (tier {guild.premium_tier}): free slots\n"
+					f"- static: {limit - static_count}/{limit}\n"
+					f"- animated: {limit - animated_count}/{limit}"
+				)
 
 	# emoji list
 	@emoji.command(name="list", help="list all emojis accessible by bot")
-	async def list(self, ctx, location: str = None):
+	async def list(self, ctx, *, location: str = None):
 		emojis = []
 
-		if location and location.lower() == "bot":
+		if not location:
+			return await ctx.send(">>> use argument `bot` to list bot's global emojis\n`all` to list all emojis from all servers\nor a comma separated list of server names to list emojis from those servers")
+
+		if location.lower() == "bot":
 			try:
 				emojis = await self.bot.fetch_application_emojis()
 			except discord.HTTPException:
 				return await ctx.send(">>> failed to fetch bot's global emojis")
 			if not emojis:
 				return await ctx.send(">>> no global emojis found for the bot")
-		elif location and location.lower() == "all":
-			emojis = [str(emoji) for guild in self.bot.guilds for emoji in guild.emojis]
-		else:return await ctx.send(">>> use argument `bot` to list bot's global emojis or `all` to list all emojis in all servers")
 
-		if not emojis:
-			return await ctx.send(">>> no emojis found")
+		elif location.lower() == "all":
+			emojis = [str(emoji) for guild in self.bot.guilds for emoji in guild.emojis]
+		
+		else:
+			server_names = [name.strip().lower() for name in location.split(",")]
+			matched_guilds = [guild for guild in self.bot.guilds if guild.name.lower() in server_names]
+
+			if not matched_guilds:
+				return await ctx.send(">>> no matching servers found")
+
+			emojis = [str(emoji) for guild in matched_guilds for emoji in guild.emojis]
+
+			if not emojis:
+				return await ctx.send(">>> no emojis found")
 
 		# split and send in chunks to avoid 2000 char limit
 		chunk = ""
