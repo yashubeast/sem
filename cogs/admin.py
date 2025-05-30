@@ -235,6 +235,7 @@ class admin(commands.Cog):
 		output = result.stdout or result.stderr
 		await reload_all_cogs(self.bot)
 		await ctx.send(f">>> ```py\n{output[:1900]}\n```")
+		print(output[:1900])
 	
 	# py
 	@commands.command(name="py", help="execute python code")
