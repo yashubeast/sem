@@ -222,17 +222,18 @@ class admin(commands.Cog):
 		await ctx.message.delete()
 
 	# restart
-	@commands.command(name="restart", help="restart the bot")
+	@commands.command(name="re", help="restart the bot")
 	@commands.is_owner()
 	async def xre(self, ctx):
-		return await ctx.send("> hard disabled, need to setup docker")
-
-		# relaunch bat in new shell
-		bat_path = os.path.abspath("RUN WITH THIS.bat")
-		subprocess.Popen(f'start "" "{bat_path}"', shell=True)
-
-		await ctx.bot.close()
-		sys.exit(0)
+		result = subprocess.run(
+			['gitpull.bat'],
+			stdout=subprocess.PIPE,
+			stderr=subprocess.PIPE,
+			shell=True,
+			text=True
+		)
+		output = result.stdout or result.stderr
+		await ctx.send(f">>> ```py\n{output[:1900]}\n```")
 	
 	# py
 	@commands.command(name="py", help="execute python code")
