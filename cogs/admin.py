@@ -1,4 +1,4 @@
-import discord, traceback, asyncio, json, re, contextlib, io
+import discord, traceback, asyncio, json, re, contextlib, io, sys, subprocess
 from discord.ext import commands
 from discord.ext.commands import Context
 from discord import app_commands
@@ -220,6 +220,19 @@ class admin(commands.Cog):
 
 		await ctx.send(message)
 		await ctx.message.delete()
+
+	# restart
+	@commands.command(name="restart", help="restart the bot")
+	@commands.is_owner()
+	async def xre(self, ctx):
+		return await ctx.send("> hard disabled, need to setup docker")
+
+		# relaunch bat in new shell
+		bat_path = os.path.abspath("RUN WITH THIS.bat")
+		subprocess.Popen(f'start "" "{bat_path}"', shell=True)
+
+		await ctx.bot.close()
+		sys.exit(0)
 	
 	# py
 	@commands.command(name="py", help="execute python code")
