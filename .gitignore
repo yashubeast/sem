@@ -1,4 +1,5 @@
 .env
+.venv/
 cogs/__pycache__/
 misc/
 utils/__pycache__/
