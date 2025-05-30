@@ -17,44 +17,48 @@ class emoji(commands.Cog):
 	# emoji (group)
 	@commands.group(help="tools for managing emojis")
 	@commands.has_permissions(administrator=True)
-	async def emoji(self, ctx, *, servers: str):
+	async def emoji(self, ctx):
 		if ctx.invoked_subcommand is None:
-			inputs = [s.strip() for s in servers.split(",")]
-			results = []
+			pass
+	
+	@emoji.command(name="info", help="info on emoji slots in servers")
+	async def info(self, ctx, *, servers: str):
+		inputs = [s.strip() for s in servers.split(",")]
+		results = []
 
-			# emoji limits by nitro level
-			tier_limits = {
-				0: 50,
-				1: 100,
-				2: 150,
-				3: 250
-			}
+		# emoji limits by nitro level
+		tier_limits = {
+			0: 50,
+			1: 100,
+			2: 150,
+			3: 250
+		}
 
-			for identifier in inputs:
-				guild = None
+		for identifier in inputs:
+			guild = None
 
-				# try to get by id
-				if identifier.isdigit():
-					guild = discord.utils.get(self.bot.guilds, id=int(identifier))
+			# try to get by id
+			if identifier.isdigit():
+				guild = discord.utils.get(self.bot.guilds, id=int(identifier))
 
-				# try to get by name
-				if not guild:
-					guild = discord.utils.find(lambda g: g.name.lower() == identifier.lower(), self.bot.guilds)
+			# try to get by name
+			if not guild:
+				guild = discord.utils.find(lambda g: g.name.lower() == identifier.lower(), self.bot.guilds)
 
-				if not guild:
-					results.append(f"> server named `{identifier}` not found")
-					continue
+			if not guild:
+				results.append(f"> server named `{identifier}` not found")
+				continue
 
-				limit = tier_limits.get(guild.premium_tier, 50)
-				emojis = guild.emojis
-				static_count = sum(not e.animated for e in emojis)
-				animated_count = sum(e.animated for e in emojis)
+			limit = tier_limits.get(guild.premium_tier, 50)
+			emojis = guild.emojis
+			static_count = sum(not e.animated for e in emojis)
+			animated_count = sum(e.animated for e in emojis)
 
-				await ctx.send(
-					f">>> {guild.name} (tier {guild.premium_tier}): free slots\n"
-					f"- static: {limit - static_count}/{limit}\n"
-					f"- animated: {limit - animated_count}/{limit}"
-				)
+			await ctx.send(
+				f">>> {guild.name} (tier {guild.premium_tier}): free slots\n"
+				f"- static: {limit - static_count}/{limit}\n"
+				f"- animated: {limit - animated_count}/{limit}"
+			)
 
 	# emoji list
 	@emoji.command(name="list", help="list all emojis accessible by bot")
