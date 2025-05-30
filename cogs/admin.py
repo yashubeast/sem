@@ -171,7 +171,7 @@ class admin(commands.Cog):
 			data = json_load("config")
 			unichar = data.setdefault("unichar", {})
 
-			if not unichar:return await ctx.send("no emojis available, please use `say ucsetup`")
+			if not unichar:return await ctx.send("> no emojis available, please use `say ucsetup`")
 
 			message = ' '.join(words[1:])
 
@@ -186,11 +186,11 @@ class admin(commands.Cog):
 		
 		elif words[0] == 'ucsetup':
 			if len(words) < 2:
-				return await ctx.send("usage: `ucsetup a-z/0-9` while replying to message containing emoji list")
+				return await ctx.send("> usage: `ucsetup a-z/0-9` while replying to message containing emoji list")
 			
 			mode = words[1].lower()
 			
-			if not ctx.message.reference:return await ctx.send("plaese reply to a message containing emojis")
+			if not ctx.message.reference:return await ctx.send("> plaese reply to a message containing emojis")
 
 			replied = await ctx.channel.fetch_message(ctx.message.reference.message_id)
 			emoji_str = replied.content
@@ -198,15 +198,15 @@ class admin(commands.Cog):
 
 			if mode == 'a-z':
 				if len(emojis) < 26:
-					return await ctx.send("atleast provide 26 emojis for a-z letters")
+					return await ctx.send("> atleast provide 26 emojis for a-z letters")
 				chars = [chr(i) for i in range(ord('a'), ord('z') +1)]
 			
 			elif mode == '0-9':
 				if len(emojis) < 10:
-					return await ctx.send("atleast provide 10 emojis for 0-9 nums")
+					return await ctx.send("> atleast provide 10 emojis for 0-9 nums")
 				chars = [str(i) for i in range(10)]
 			else:
-				return await ctx.send("invalid mode, use `a-z` or `0-9`, custom range and individual char addition will be added soon")
+				return await ctx.send("> invalid mode, use `a-z` or `0-9`, custom range and individual char addition will be added soon")
 
 			# create mapping
 			mapping = dict(zip(chars, emojis))
@@ -216,7 +216,15 @@ class admin(commands.Cog):
 			data.setdefault("unichar", {}).update(mapping)
 			json_save("config", data)
 
-			return await ctx.send(f"added emojis for `{mode}`")
+			return await ctx.send(f"> added emojis for `{mode}`")
+
+		elif words[0] in ('this', 'ts'):
+			if not ctx.message.reference:
+				return await ctx.send("> please reply to a message containing text")
+			replied = await ctx.channel.fetch_message(ctx.message.reference.message_id)
+			message = replied.content
+			if not message.strip():
+				return await ctx.send("> the replied message is empty, please reply to a message containing text")
 
 		await ctx.send(message)
 		await ctx.message.delete()
