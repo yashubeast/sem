@@ -51,7 +51,10 @@ class server(commands.Cog):
 	async def server(self, ctx, *, name: str = None):
 		subcommand = [cmd.name for cmd in ctx.command.commands]
 
-		if not name:return await ctx.send(">>> provide server name to preview\n-# deleting..", delete_after=3)
+		if not name:
+			await ctx.send(">>> provide server name to preview\n-# deleting..", delete_after=3)
+			await ctx.message.delete()
+			return
 
 		name = name.lower().strip()
 
@@ -69,7 +72,7 @@ class server(commands.Cog):
 			await ctx.message.delete()
 
 	# server add
-	@server.command(name="add", aliases=["a"], help="add/edit a server")
+	@server.command(name="add", aliases=["a"], help="add/overwrite a server")
 	@app_commands.describe(name="server name")
 	async def add(self, ctx, *, name: str):
 		if ctx.interaction is None:
@@ -77,6 +80,10 @@ class server(commands.Cog):
 				replied_message_id = ctx.message.reference.message_id
 				replied_message = await ctx.channel.fetch_message(replied_message_id)
 				server_content = replied_message.content
+
+				# check if server already exists
+				async with self.bot.db.execute("SELECT 1 FROM servers WHERE name = ?", (name,)) as cursor:
+					exists = await cursor.fetchone()
 
 				# get current highest pos
 				async with self.bot.db.execute("SELECT MAX(pos) FROM servers") as cursor:
@@ -91,9 +98,10 @@ class server(commands.Cog):
 					""", (next_pos, name, server_content))
 				await self.bot.db.commit()
 				
-				await ctx.send(f"server `{name}` imported")
+				action = "replaced" if exists else "added"
+				await ctx.send(f"server `{name}` {action}")
 			else:
-				await ctx.send("you need to reply to a message")
+				await ctx.send("> you need to reply to a message")
 
 	# server remove
 	@server.command(name="remove", aliases=["r", "rm", "d", "del"], help="remove a server")
@@ -383,6 +391,9 @@ class server(commands.Cog):
 		name = name.lower().strip() if name is not None else None
 		action = action.lower().strip() if action is not None else None
 
+		if name is None:
+			return await ctx.send("> provide server name to move")
+
 		if action not in ("up", "u", "down", "d", "to", "t", "above", "a", "below", "b"):
 			return await ctx.send(f"> available options for moving server: `up`, `down`, `to`, `above`, `below`")
 
@@ -483,7 +494,7 @@ class server(commands.Cog):
 		
 		await self.bot.db.commit()
 
-		await ctx.send(f"moved server `{name}` {action} to position {new_pos}")
+		await ctx.send(f"> moved server `{name}` {action} to position `{new_pos}`")
 
 	# server import
 	@server.command(name="import", help="bulk import server messages using range")
