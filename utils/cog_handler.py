@@ -11,15 +11,18 @@ async def unload_cog(bot, cog):
 	await bot.unload_extension(f"cogs.{cog}")
 
 async def load_all_cogs(bot):
-	for filename in os.listdir("./cogs"):
-		if filename.endswith(".py"):
-			cog_name = filename[:-3]
-			q_name = f"cogs.{cog_name}"
-			try:
-				await bot.unload_extension(q_name)
-			except commands.ExtensionNotLoaded:
-				pass
-			await bot.load_extension(q_name)
+	for root, _, files in os.walk("./cogs"):
+		for file in files:
+			if file.endswith(".py"):
+				# get module path, e.g. cogs/admin/mod.py -> cogs.admin.mod
+				rel_path = os.path.relpath(os.path.join(root, file), ".")
+				module_path = rel_path[:-3].replace(os.path.sep, ".")
+
+				try:
+					await bot.unload_extension(module_path)
+				except commands.ExtensionNotLoaded:
+					pass
+				await bot.load_extension(module_path)
 
 async def reload_all_cogs(bot):
 	for filename in os.listdir("./cogs"):
