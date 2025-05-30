@@ -102,6 +102,34 @@ class emoji(commands.Cog):
 
 		if chunk:
 			await ctx.send(chunk)
+	
+	# emoji remove
+	@emoji.command(name="remove", help="remove emoji from server")
+	@commands.has_permissions(manage_emojis_and_stickers=True)
+	@commands.bot_has_permissions(manage_emojis_and_stickers=True)
+	async def remove(self, ctx, *emojis: discord.Emoji):
+		if not emojis:
+			return await ctx.send("> provide atleast one emoji to remove")
+
+		successes = []
+		failures = []
+
+		for emoji in emojis:
+			try:
+				await emoji.delete(reason=f"removed by {ctx.author} via command")
+				successes.append(f"{emoji.name} (`{emoji.guild.name}`)")
+			except discord.Forbidden:
+				failures.append(f"{emoji.name} (`{emoji.guild.name}`) - no permission")
+			except discord.HTTPException:
+				failures.append(f"{emoji.name} (`{emoji.guild.name}`) - deletion failed")
+
+		response = ""
+		if successes:
+			response += f">>> removed: {'\n'.join(successes)}\n\n"
+		if failures:
+			response += f"failed: {', '.join(failures)}"
+
+		await ctx.send(response)
 
 	# emoji import
 	@emoji.command(name="import", help="import replied msg's emojis to server")
