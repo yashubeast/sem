@@ -6,8 +6,6 @@ from typing import Tuple
 from utils.json_handler import json_load, json_save
 from utils.values import default_color, checkserver
 
-json_file_path = "assets/server.json"
-
 def build_message_sequences(contents, separator, use_separators, include_edges):
 	sequence = []
 	for i, content in enumerate(contents):
