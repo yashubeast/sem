@@ -167,6 +167,7 @@ class admin(commands.Cog):
 	@commands.bot_has_permissions(manage_messages=True)
 	async def say(self, ctx:Context, *, message: str) -> None:
 		words = message.split()
+		reply_to_msg = True
 		if words[0] == "uc":
 			data = json_load("config")
 			unichar = data.setdefault("unichar", {})
@@ -185,6 +186,7 @@ class admin(commands.Cog):
 			message = re.sub(r"\{([^{}]+)\}", replace_braces, message)
 		
 		elif words[0] == 'ucsetup':
+			reply_to_msg = False
 			if len(words) < 2:
 				return await ctx.send("> usage: `ucsetup a-z/0-9` while replying to message containing emoji list")
 			
@@ -219,6 +221,7 @@ class admin(commands.Cog):
 			return await ctx.send(f"> added emojis for `{mode}`")
 
 		elif words[0] in ('this', 'ts'):
+			reply_to_msg = False
 			if not ctx.message.reference:
 				return await ctx.send("> please reply to a message containing text")
 			replied = await ctx.channel.fetch_message(ctx.message.reference.message_id)
@@ -226,7 +229,7 @@ class admin(commands.Cog):
 			if not message.strip():
 				return await ctx.send("> the replied message is empty, please reply to a message containing text")
 
-		await ctx.send(message)
+		await ctx.send(message, reference=ctx.message.reference if reply_to_msg else None)
 		await ctx.message.delete()
 
 	# restart
