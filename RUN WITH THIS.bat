@@ -1,6 +1,6 @@
 @echo off
 
-title quandale dingle
+title discord bot: sem
 
 SETLOCAL
 
