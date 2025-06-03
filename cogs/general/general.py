@@ -78,7 +78,7 @@ class general(commands.Cog):
 		# await ctx.send(f"no command or category named `{search}` found")
 
 	# info
-	@commands.hybrid_command(help="universal info cmd (server, user)", aliases=["i"])
+	@commands.hybrid_command(help="universal info cmd: server, @user/name/id/nick, @role/id", aliases=["i"])
 	async def info(self, ctx, *, query: str = None):
 
 		# info bot
@@ -159,7 +159,7 @@ class general(commands.Cog):
 
 	# test command
 	@commands.command(name="test")
-	@commands.has_permissions(administrator=True)
+	@commands.is_owner()
 	async def test(self, ctx, user: discord.User, channel:discord.TextChannel = None):
 		await ctx.message.delete()
 		channel = channel or ctx.channel

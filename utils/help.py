@@ -11,16 +11,11 @@ class cogbutton(Button):
 		self.index = 0
 
 	async def callback(self, interaction: discord.Interaction):
-		
 		self.view.active_button = self
-
 		self.view.left.disabled = False
 		self.view.right.disabled = False
 
-		embed = generate_help_embed([self.cogs[self.index]], title=f"{self.label} category")
-		embed.set_footer(text=f"{self.index + 1}/{len(self.cogs)}")
-
-		await interaction.response.edit_message(embed=embed, view=self.view)
+		await self.view.update_embed(interaction, self.index)
 
 class helpview(View):
 	def __init__(self, bot):
@@ -43,36 +38,28 @@ class helpview(View):
 		folders = get_cogs_by_folder(bot)
 		for folder, fcogs in folders.items():
 			self.add_item(cogbutton(label=folder, cogs=fcogs))
+	
+	async def update_embed(self, interaction: discord.Interaction, index):
+		btn = self.active_button
+		cog = btn.cogs[index]
+		cog_name = cog.qualified_name.split(".")[-1]
+		embed = generate_help_embed([cog], title=f"{btn.label} category")
+		embed.description = f"{cog_name} commands:"
+		embed.set_footer(text=f"{index + 1}/{len(btn.cogs)}")
+		await interaction.response.edit_message(embed=embed, view=self)
 		
 	async def go_left(self, interaction: discord.Interaction):
-		btn = self.active_button
-		if btn:
-			btn.index = (btn.index -1) % len(btn.cogs)
-			cog_name = btn.cogs[btn.index].qualified_name.split(".")[-1]
-			embed = generate_help_embed(
-				[btn.cogs[btn.index]],
-				title=f"{btn.label} category"
-			)
-			embed.description = f"{cog_name} commands:"
-			embed.set_footer(text=f"{btn.index + 1}/{len(btn.cogs)}")
-			await interaction.response.edit_message(embed=embed, view=self)
-		else:
-			await interaction.response.send_message(">>> no category selected", ephemeral=True)
+		if not self.active_button:
+			return await interaction.response.send_message(">>> no category selected", ephemeral=True)
+		
+		self.active_button.index = (self.active_button.index - 1) % len(self.active_button.cogs)
+		await self.update_embed(interaction, self.active_button.index)
 	
 	async def go_right(self, interaction: discord.Interaction):
-		btn = self.active_button
-		if btn:
-			btn.index = (btn.index + 1) % len(btn.cogs)
-			cog_name = btn.cogs[btn.index].qualified_name.split(".")[-1]
-			embed = generate_help_embed(
-				[btn.cogs[btn.index]],
-				title=f"{btn.label} category"
-			)
-			embed.description = f"{cog_name} commands:"
-			embed.set_footer(text=f"{btn.index + 1}/{len(btn.cogs)}")
-			await interaction.response.edit_message(embed=embed, view=self)
-		else:
-			await interaction.response.send_message(">>> no category selected", ephemeral=True)
+		if not self.active_button:
+			return await interaction.response.send_message(">>> no category selected", ephemeral=True)
+		self.active_button.index = (self.active_button.index + 1) % len(self.active_button.cogs)
+		await self.update_embed(interaction, self.active_button.index)
 
 def get_cogs_by_folder(bot):
 	folders = {}

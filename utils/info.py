@@ -26,9 +26,9 @@ async def time_ago(date):
 async def info_servers(guilds):
 	if guilds:
 		guilds_str = "\n".join(f"[{g.name}](https://discord.com/channels/{g.id})" for g in guilds)
-		message = f"### total servers: {len(guilds)}\n>>> " + guilds_str
+		message = f"### servers i am in: {len(guilds)}\n>>> " + guilds_str
 	else:
-		message = "bot is not in any servers"
+		message = "> sem is not in any servers"
 	return message
 
 async def info_user(ctx, user):
