@@ -18,4 +18,4 @@ RUN pip install --no-cache-dir -r req.txt
 RUN chmod +x run.sh
 
 # run the bot
-CMD ["python", "run.sh"]
+CMD ["./run.sh"]
