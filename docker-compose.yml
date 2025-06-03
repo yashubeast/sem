@@ -6,13 +6,8 @@ services:
     volumes:
       - sql-data:/sem/assets
     environment:
-      - TOKEN_FILE=/run/secrets/token
       - PYTHONUNBUFFERED=1
     restart: unless-stopped
-
-secrets:
-  token:
-    external: true
 
 volumes:
   sql-data:
