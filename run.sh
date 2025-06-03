@@ -4,8 +4,9 @@
 set -e
 
 # pull latest changes from the repository
-git reset --hard HEAD
-git pull origin main
+echo "pulling latest changes.."
+git reset --hard -q HEAD
+git pull -q origin main
 
 # token check
 if ! grep -q "^TOKEN=" .env 2>/dev/null; then
@@ -14,9 +15,9 @@ if ! grep -q "^TOKEN=" .env 2>/dev/null; then
 fi
 
 # install dependencies
-echo "Installing dependencies.."
+echo "installing dependencies.."
 python -m pip install -r req.txt -q
 
 # run the bot
-echo "Waking up sem.."
+echo "waking up sem.."
 python main.py
