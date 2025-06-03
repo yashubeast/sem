@@ -1,6 +1,8 @@
 .env
+.git
 .venv/
 __pycache__/
-/misc/
-!cogs/misc/
+teststuff/
 assets/
+
+cogs/misc/test.py
