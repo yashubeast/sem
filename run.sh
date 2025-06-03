@@ -12,4 +12,4 @@ python -m pip install -r req.txt
 
 # run the bot
 echo "Waking up sem.."
-python run.py
+python main.py
