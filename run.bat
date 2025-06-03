@@ -17,6 +17,9 @@ if not exist "%VENV_DIR%" (
 REM activate venv
 call "%VENV_ACTIVATE%"
 
+REM pull latest changes from git
+git pull origin main
+
 REM install requirements
 pip install -r req.txt
 

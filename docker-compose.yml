@@ -1,0 +1,13 @@
+services:
+  sem:
+    image: semi
+    build: .
+    container_name: sem
+    volumes:
+      - sql-data:/sem/assets
+    environment:
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
+
+volumes:
+  sql-data:
