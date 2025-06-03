@@ -1,0 +1,17 @@
+CREATE TABLE IF NOT EXISTS tags(
+	name TEXT,
+	content TEXT,
+	gid INT,
+	cid INT
+);
+
+CREATE TABLE IF NOT EXISTS servers(
+	pos INTEGER UNIQUE,
+	name TEXT UNIQUE,
+	content TEXT
+);
+
+CREATE TABLE IF NOT EXISTS servers_msgs(
+pos INTEGER PRIMARY KEY,
+mid TEXT NOT NULL
+);
