@@ -1,8 +1,7 @@
 import discord, asyncio
 from discord.ext import commands
-from discord import app_commands
 from utils.values import default_color
-from utils.help_handler import format_command_fields, helpview
+from utils.help import helpview
 from utils.info import *
 
 class general(commands.Cog):
@@ -19,7 +18,7 @@ class general(commands.Cog):
 		await ctx.send(f"{round(self.bot.latency * 1000)}ms.")
 	
 	# help
-	@commands.hybrid_command(name="help", help="wikipedia of bot", with_app_command=True)
+	@commands.hybrid_command(name="help", help="wikipedia of bot")
 	# @app_commands.describe(search="specify a category or a command to look up, or * for all commands in all categories")
 	async def help(self, ctx):
 

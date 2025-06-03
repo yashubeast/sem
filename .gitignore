@@ -1,7 +1,5 @@
 .env
 .venv/
-cogs/__pycache__/
-misc/
-utils/__pycache__/
+__pycache__/
+misc
 assets/
-cogs/fun/__pycache__/
