@@ -4,6 +4,7 @@
 set -e
 
 # pull latest changes from the repository
+git reset --hard HEAD
 git pull origin main
 
 # install dependencies
