@@ -14,6 +14,8 @@ if ! grep -q "^TOKEN=" .env 2>/dev/null; then
 	exit 1
 fi
 
+export TOKEN=$(cat "$TOKEN_FILE")
+
 # install dependencies
 echo "installing dependencies.."
 python -m pip install -r req.txt -q
