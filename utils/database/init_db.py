@@ -3,7 +3,7 @@ from pathlib import Path
 
 async def init_db(bot):
 	os.makedirs("assets", exist_ok=True)
-	bot.db = await aiosqlite.connect("assets/main.db")
+	bot.db = await aiosqlite.connect(os.path.join("assets", "main.db"))
 	await bot.db.execute("PRAGMA journal_mode=WAL")
 
 	await apply_schemas(bot.db)
