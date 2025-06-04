@@ -24,7 +24,7 @@ REM install requirements
 pip install -r req.txt
 
 REM run bot
-python run.py
+python main.py
 
 ENDLOCAL
 
