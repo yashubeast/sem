@@ -62,7 +62,7 @@ class semity(commands.Cog):
 			) as resp:
 				if resp.status == 200:
 					data = await resp.json()
-					print(f"message count updated: {data['message_count']}")
+					print(f"{message.author} -> message count: {data['message_count']}")
 				else:
 					print(f"api error: {resp.status}")
 	
@@ -75,7 +75,7 @@ class semity(commands.Cog):
 		server_id = message.guild.id
 
 		async with aiohttp.ClientSession() as session:
-			url = "http://localhost:8000/messages/remove"
+			url = "http://localhost:8000/equity/message/remove"
 			json = {
 				"user_id": user_id,
 				"server_id": server_id
@@ -83,14 +83,14 @@ class semity(commands.Cog):
 
 			async with session.post(url, json=json) as resp:
 				if resp.status == 404:
-					await message.channel.send(f"> no entry for user {message.author.mention}")
+					print(f"no entry for user {message.author}")
 				elif resp.status == 400:
-					await message.channel.send(f"> count 0 for user {message.author.mention}")
+					print(f"count 0 for user {message.author}")
 				elif resp.status == 200:
 					data = await resp.json()
-					await message.channel.send(f"> message count updated: {data['message_count']} for {message.author.mention}")
+					print(f"{message.author} -> message count: {data['message_count']}")
 				else:
-					await message.channel.send(f"> error updating message count for {message.author.mention}")
+					print(f"error updating message count for {message.author}")
 	
 	@commands.command(name="msgcount", description="get message count for a user, total/specified server")
 	async def msgcount(self, ctx, user: discord.User = None, server: int = None):
