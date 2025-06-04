@@ -37,7 +37,7 @@ class semity(commands.Cog):
 		# message formula
 		async with aiohttp.ClientSession() as session:
 			async with session.post(
-				"http://localhost:8000/equity/message/formula",
+				"http://localhost:8000/discord/equity/message/formula",
 				json={
 					"user_id": user_id,
 					"server_id": server_id,
@@ -54,7 +54,7 @@ class semity(commands.Cog):
 		# message count
 		async with aiohttp.ClientSession() as session:
 			async with session.post(
-				"http://localhost:8000/equity/message/add",
+				"http://localhost:8000/discord/equity/message/add",
 				json={
 					"user_id": user_id,
 					"server_id": server_id
@@ -75,7 +75,7 @@ class semity(commands.Cog):
 		server_id = message.guild.id
 
 		async with aiohttp.ClientSession() as session:
-			url = "http://localhost:8000/equity/message/remove"
+			url = "http://localhost:8000/discord/equity/message/remove"
 			json = {
 				"user_id": user_id,
 				"server_id": server_id
@@ -103,7 +103,7 @@ class semity(commands.Cog):
 		server_name = await self.bot.fetch_guild(server) if server else None
 
 		async with aiohttp.ClientSession() as session:
-			url = f"http://localhost:8000/equity/message/{user_id}" + (f"?server_id={server}" if server else "")
+			url = f"http://localhost:8000/discord/equity/message/{user_id}" + (f"?server_id={server}" if server else "")
 			async with session.get(url) as resp:
 				if resp.status == 404:
 					msg = ("> no entry for user")
@@ -125,7 +125,7 @@ class semity(commands.Cog):
 		user_id = user.id
 
 		async with aiohttp.ClientSession() as session:
-			url = f"http://localhost:8000/equity/coin/balance/{user_id}"
+			url = f"http://localhost:8000/discord/equity/coin/balance/{user_id}"
 			async with session.get(url) as resp:
 				if resp.status == 404:
 					await ctx.send(f"> no entry for user {user.mention}")
