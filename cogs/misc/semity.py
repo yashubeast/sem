@@ -92,7 +92,12 @@ class semity(commands.Cog):
 				else:
 					print(f"error updating message count for {message.author}")
 	
-	@commands.command(name="msgcount", description="get message count for a user, total/specified server")
+	# semity group
+	@commands.group(name="semity")
+	async def semity(self, ctx):
+		pass
+
+	@semity.command(name="msgcount", description="get message count for a user, total/specified server")
 	async def msgcount(self, ctx, user: discord.User = None, server: int = None):
 		user_id = (user or ctx.author).id
 		server_name = await self.bot.fetch_guild(server) if server else None
@@ -112,6 +117,22 @@ class semity(commands.Cog):
 				if server_name:
 					msg += f" in {server_name}"
 				await ctx.send(msg)
+	
+	# semity balance
+	@semity.command(name="balance", description="get balance for a user")
+	async def balance(self, ctx, user: discord.User = None):
+		user = user or ctx.author
+		user_id = user.id
+
+		async with aiohttp.ClientSession() as session:
+			url = f"http://localhost:8000/equity/coin/balance/{user_id}"
+			async with session.get(url) as resp:
+				if resp.status == 404:
+					await ctx.send(f"> no entry for user {user.mention}")
+					return
+				
+				data = await resp.json()
+				await ctx.send(f"> {user.mention} has {data['coins']} coins")
 
 async def setup(bot):
 	await bot.add_cog(semity(bot))
