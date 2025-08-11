@@ -6,7 +6,7 @@ RUN apt-get update && \
 	apt-get clean
 
 # set working directory
-WORKDIR /sem
+WORKDIR /app
 
 # clone the repository
 RUN git clone https://github.com/yashubeast/sem.git .
