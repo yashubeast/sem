@@ -1,1 +1,8 @@
-**/*
+.env
+.env.example
+.idea/
+.git/
+.gitignore
+Dockerfile
+run.bat
+.dockerignore

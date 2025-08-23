@@ -1,13 +1,10 @@
 services:
   sem:
-    image: semi
-    build: .
+    image: sem
+    # build: .
     container_name: sem
-    volumes:
-      - sql-data:/sem/assets
-    environment:
-      - PYTHONUNBUFFERED=1
     restart: unless-stopped
-
-volumes:
-  sql-data:
+    environment:
+      TOKEN: ${TOKEN}
+      ADMINS: ${ADMINS}
+      ALLOWED_SERVERS: ${ALLOWED_SERVERS}

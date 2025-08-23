@@ -1,15 +1,10 @@
 FROM python:3.11-slim
 
-# install git and other dependencies
-RUN apt-get update && \
-	apt-get install -y git && \
-	apt-get clean
-
 # set working directory
 WORKDIR /app
 
-# clone the repository
-RUN git clone https://github.com/yashubeast/sem.git .
+# copy the files
+COPY . .
 
 # install
 RUN pip install --no-cache-dir -r req.txt

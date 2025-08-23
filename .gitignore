@@ -1,6 +1,8 @@
 .env
 .git
 .venv/
+venv/
 __pycache__/
 teststuff/
 assets/
+.idea/
