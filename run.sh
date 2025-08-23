@@ -4,9 +4,9 @@
 set -e
 
 # token check
-if ! grep -q "^TOKEN=" .env 2>/dev/null; then
-	echo "missing TOKEN in .env file"
-	exit 1
+if [ -z "$TOKEN" ]; then
+  echo "missing TOKEN in .env file"
+  exit 1
 fi
 
 # run the bot

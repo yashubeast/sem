@@ -4,7 +4,7 @@ import discord, uuid, yt_dlp, os
 from discord.ext import commands
 from discord import app_commands
 
-class User(commands.Cog):
+class user(commands.Cog):
 	def __init__(self, bot):
 		self.bot = bot
 
@@ -106,4 +106,4 @@ class User(commands.Cog):
 				os.remove(downloaded_filename)
 
 async def setup(bot):
-	await bot.add_cog(User(bot))
+	await bot.add_cog(user(bot))
