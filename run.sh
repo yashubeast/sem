@@ -4,10 +4,10 @@
 set -e
 
 # token check
-if [ -z "$TOKEN" ]; then
-  echo "missing TOKEN in .env file"
-  exit 1
-fi
+# if [ -z "$TOKEN" ]; then
+  # echo "missing TOKEN in .env file"
+  # exit 1
+# fi
 
 # run the bot
 echo "waking up sem.."
