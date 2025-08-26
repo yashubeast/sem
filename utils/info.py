@@ -67,3 +67,7 @@ async def info_role(ctx, role: discord.Role) -> discord.Embed:
 	embed.add_field(name="members", value=len(role.members))
 	embed.add_field(name="created on", value=f"{await format_date_with_suffix(role.created_at)}\n-# {await time_ago(role.created_at)}", inline=False)
 	return embed
+
+exceptions = {
+	'cogs.fun.fun'
+}

@@ -1,4 +1,5 @@
 from discord.ext import commands
+from utils.info import exceptions
 import os
 
 async def load_cog(bot, cog):
@@ -17,6 +18,9 @@ async def load_all_cogs(bot):
 				# get module path, e.g. cogs/admin/mod.py -> cogs.admin.mod
 				rel_path = os.path.relpath(os.path.join(root, file), ".")
 				module_path = rel_path[:-3].replace(os.path.sep, ".")
+
+				if module_path in exceptions:
+					continue
 
 				try:
 					await bot.unload_extension(module_path)
