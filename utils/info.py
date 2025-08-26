@@ -69,5 +69,5 @@ async def info_role(ctx, role: discord.Role) -> discord.Embed:
 	return embed
 
 exceptions = {
-	'cogs.fun.fun'
+	# 'cogs.fun.fun'
 }

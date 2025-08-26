@@ -14,7 +14,7 @@ class user(commands.Cog):
 
 	# media
 	@app_commands.command(name="media", description="preview media from a URL")
-	@app_commands.allowed_installs(guilds=False, users=True)
+	@app_commands.allowed_installs(guilds=True, users=True)
 	@app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
 	async def media(self, interaction: discord.Interaction, url: str):
 		await interaction.response.defer(thinking=True)
