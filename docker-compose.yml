@@ -1,7 +1,6 @@
 services:
   sem:
-    image: sem
-    # build: .
+    image: yashubeast/nerv:sem
     container_name: sem
     restart: unless-stopped
     environment:

@@ -1,7 +1,9 @@
+from pyexpat.errors import messages
+from typing import Any, Coroutine
+
 import discord, traceback, asyncio, json, re, contextlib, io, sys, subprocess
-from discord.ext import commands
 from discord.ext.commands import Context
-from discord import app_commands
+from discord import app_commands, Message
 from utils.cog_handler import *
 from utils.json_handler import json_load, json_save
 from utils.status import update_status
@@ -165,8 +167,10 @@ class admin(commands.Cog):
 	@commands.command(name="say", help="make bot send a message")
 	@commands.has_permissions(administrator=True)
 	@commands.bot_has_permissions(manage_messages=True)
-	async def say(self, ctx:Context, *, message: str) -> None:
-		words = message.split()
+	async def say(self, ctx:Context, *, message: str = None) -> None:
+		words = message.split() if message is not None else ['x', 'x', 'x']
+		files = [await att.to_file() for att in ctx.message.attachments]
+
 		reply_to_msg = True
 		if words[0] == "uc":
 			data = json_load("config")
@@ -220,17 +224,31 @@ class admin(commands.Cog):
 
 			return await ctx.send(f"> added emojis for `{mode}`")
 
-		elif words[0] in ('this', 'ts'):
-			reply_to_msg = False
-			if not ctx.message.reference:
-				return await ctx.send("> please reply to a message containing text")
-			replied = await ctx.channel.fetch_message(ctx.message.reference.message_id)
-			message = replied.content
-			if not message.strip():
-				return await ctx.send("> the replied message is empty, please reply to a message containing text")
+		# elif words[0] in ('this', 'ts'):
+		# 	reply_to_msg = False
+		# 	if not ctx.message.reference:
+		# 		return await ctx.send("> please reply to a message containing text")
+		# 	replied = await ctx.channel.fetch_message(ctx.message.reference.message_id)
+		# 	message = replied.content
+		# 	if not message.strip():
+		# 		return await ctx.send("> the replied message is empty, please reply to a message containing text")
 
-		await ctx.send(message, reference=ctx.message.reference if reply_to_msg else None)
-		await ctx.message.delete()
+		if not message and not files:
+			await ctx.send(
+				"> requires atleast a message or a attachment\n> -# deleting...",
+				delete_after = 5
+			)
+			return None
+
+		await ctx.send(
+			content = message,
+			files = files,
+			reference=ctx.message.reference if reply_to_msg else None
+		)
+		try:
+			await ctx.message.delete()
+		except discord.Forbidden:
+			pass
 
 	# restart
 	@commands.command(name="re", help="restart the bot")
