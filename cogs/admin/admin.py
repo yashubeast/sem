@@ -171,6 +171,13 @@ class admin(commands.Cog):
 		words = message.split() if message is not None else ['x', 'x', 'x']
 		files = [await att.to_file() for att in ctx.message.attachments]
 
+		if not message and not files:
+			await ctx.send(
+				"> requires atleast a message or a attachment\n> -# deleting...",
+				delete_after = 5
+			)
+			return None
+
 		reply_to_msg = True
 		if words[0] == "uc":
 			data = json_load("config")
@@ -224,21 +231,38 @@ class admin(commands.Cog):
 
 			return await ctx.send(f"> added emojis for `{mode}`")
 
-		# elif words[0] in ('this', 'ts'):
-		# 	reply_to_msg = False
-		# 	if not ctx.message.reference:
-		# 		return await ctx.send("> please reply to a message containing text")
-		# 	replied = await ctx.channel.fetch_message(ctx.message.reference.message_id)
-		# 	message = replied.content
-		# 	if not message.strip():
-		# 		return await ctx.send("> the replied message is empty, please reply to a message containing text")
+		elif words[0] in ('-in'):
+			reply_to_msg = False
 
-		if not message and not files:
-			await ctx.send(
-				"> requires atleast a message or a attachment\n> -# deleting...",
-				delete_after = 5
+			if len(words) < 2:
+				return await ctx.send("> usage: `,say -in #channel <message>`\n> -# deleting...", delete_after=5)
+
+			# parse channel mention
+			channel_mention = words[1]
+			if not (channel_id := re.findall(r"<#(\d+)>", channel_mention)):
+				return await ctx.send("> please mention a valid channel\n> -# deleting...", delete_after=5)
+			channel_id = int(channel_id[0])
+
+			# resolve channel
+			channel = ctx.guild.get_channel(channel_id)
+			if not channel:
+				return await ctx.send("> channel not found in this server\n> -# deleting...", delete_after=5)
+
+			# message text = everything after channel mention
+			message = " ".join(words[2:])
+			if not message.strip():
+				return await ctx.send("> please provide a message after the channel mention\n> -# deleting...", delete_after=5)
+
+			# send in target channel
+			await channel.send(
+				content=message,
+				files=files
 			)
-			return None
+			try:
+				await ctx.message.delete()
+			except discord.Forbidden:
+				pass
+			return
 
 		await ctx.send(
 			content = message,
