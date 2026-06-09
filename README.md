@@ -5,3 +5,9 @@ You require no skills whatsoever to customize or host this bot.
 
 Read ./default.go for now, until i finish the documentation here.
 The rest of the documentation will be done later cuz im bored rn.
+
+# TODOS
+- dynamic_vc
+- sticky messages
+- sudo option
+- media

@@ -1,5 +1,3 @@
-// go:build default
-
 package main
 
 import (
@@ -69,6 +67,10 @@ func init() {
 				Definition: &discordgo.ApplicationCommand{
 					Name: "purge",
 					Description: "Deletes messages in current channel.",
+					DefaultMemberPermissions: func() *int64 {
+						p := int64(discordgo.PermissionManageMessages)
+						return &p
+					}(),
 					Options: []*discordgo.ApplicationCommandOption{
 						{
 							Type: discordgo.ApplicationCommandOptionInteger,
