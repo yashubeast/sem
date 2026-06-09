@@ -1,3 +1,5 @@
+// go:build default
+
 package main
 
 import (
@@ -53,6 +55,38 @@ func init() {
 					},
 				},
 				Handler: commands.SlashSay,
+			},
+
+			"coinflip": {
+				Definition: &discordgo.ApplicationCommand{
+					Name: "coinflip",
+					Description: "Flips a coin.",
+				},
+				Handler: commands.SlashCoinflip,
+			},
+
+			"purge": {
+				Definition: &discordgo.ApplicationCommand{
+					Name: "purge",
+					Description: "Deletes messages in current channel.",
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Type: discordgo.ApplicationCommandOptionInteger,
+							Name: "amount",
+							Description: "Number of messages to delete (max 100).",
+							Required: true,
+							MinValue: func() *float64 { v := 1.0; return &v }(),
+							MaxValue: 100,
+						},
+						{
+							Type: discordgo.ApplicationCommandOptionUser,
+							Name: "user",
+							Description: "Only delete messages from this user.",
+							Required: false,
+						},
+					},
+				},
+				Handler: commands.SlashPurge,
 			},
 
 		},
