@@ -1,6 +1,11 @@
 package main
 
-import "semplate/bot"
+import (
+	"semplate/bot"
+	"semplate/commands"
+
+	"github.com/bwmarrin/discordgo"
+)
 
 // Do Not Edit.
 
@@ -21,8 +26,35 @@ func init() {
 			// "string": function
 			// "string" means the command name (users will send ",string" to execute the command).
 			// and the function is what will be executed.
-			"ping": bot.Ping,
-			"say": bot.Say,
+			"ping": commands.Ping,
+			"say": commands.Say,
+		},
+		SlashCommands: map[string]bot.SlashCommandEntry{
+
+			"ping": {
+				Definition: &discordgo.ApplicationCommand{
+					Name: "ping",
+					Description: "Replies with pong.",
+				},
+				Handler: commands.SlashPing,
+			},
+
+			"say": {
+				Definition: &discordgo.ApplicationCommand{
+					Name: "say",
+					Description: "Repeats your Message.",
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Type: discordgo.ApplicationCommandOptionString,
+							Name: "message",
+							Description: "What to repeat.",
+							Required: true,
+						},
+					},
+				},
+				Handler: commands.SlashSay,
+			},
+
 		},
 	})
 }

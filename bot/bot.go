@@ -12,12 +12,17 @@ import (
 
 // Command template.
 type CommandTemplate func(s *discordgo.Session, m *discordgo.MessageCreate, args []string)
+// Slash Command template.
+type SlashCommandTemplate func(s *discordgo.Session, i *discordgo.InteractionCreate)
+type SlashCommandEntry struct { Definition *discordgo.ApplicationCommand; Handler SlashCommandTemplate }
 
 // Config for unique bots.
 type Config struct {
 	Prefix string
-	Commands map[string]CommandTemplate
 	OnReady func(s *discordgo.Session, event *discordgo.Ready)
+	Commands map[string]CommandTemplate
+	SlashCommands map[string]SlashCommandEntry
+	GuildID string // Optional: empty = global, set = guild-only (instant registration)
 }
 
 // Unique bot with its own commands, discord-bot-application and others.
@@ -26,7 +31,7 @@ type Bot struct {
 	session *discordgo.Session
 }
 
-// Creates a new Bot frmo the given config and Discord Token.
+// Creates a new Bot from the given config.
 func New(config Config) (*Bot, error) {
 	return &Bot{ config: config }, nil
 }
@@ -39,12 +44,16 @@ func (b *Bot) Run(token string) error {
 
 	b.session.AddHandler(b.ready)
 	b.session.AddHandler(b.messageCreate)
+	b.session.AddHandler(b.interactionCreate)
 
 	b.session.Identify.Intents |= discordgo.IntentsGuilds
 	b.session.Identify.Intents |= discordgo.IntentsGuildMessages
 
 	if err := b.session.Open(); err != nil { return fmt.Errorf("Failed to open session: %w", err) }
 	defer b.session.Close()
+
+	// Register slash commands after opening session.
+	b.registerSlashCommands()
 
 	slog.Info("Bot is now running. Press Ctrl-c to exit.")
 	sc := make(chan os.Signal, 1)
@@ -77,4 +86,24 @@ func (b *Bot) messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	handler, ok := b.config.Commands[command]
 	if !ok { return }
 	handler(s, m, args)
+}
+
+func (b *Bot) registerSlashCommands() {
+	for _, entry := range b.config.SlashCommands {
+		_, err := b.session.ApplicationCommandCreate(
+			b.session.State.User.ID,
+			b.config.GuildID,
+			entry.Definition,
+		)
+		if err != nil { slog.Error("Failed to register slash command", "name", entry.Definition.Name, "err", err) }
+	}
+}
+
+func (b *Bot) interactionCreate(s *discordgo.Session, i *discordgo.InteractionCreate) {
+    if i.Type != discordgo.InteractionApplicationCommand { return }
+
+    name := i.ApplicationCommandData().Name
+    entry, ok := b.config.SlashCommands[name]
+    if !ok { return }
+    entry.Handler(s, i)
 }
