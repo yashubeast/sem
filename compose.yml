@@ -1,0 +1,8 @@
+services:
+
+  bot:
+    build: .
+    container_name: bot
+    environment:
+      - "TOKEN=123"
+    restart: always
