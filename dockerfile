@@ -4,11 +4,10 @@ WORKDIR /build
 # Copy files.
 COPY bot bot
 COPY commands commands
-COPY default.go default.go
-COPY main.go main.go
-COPY template.go template.go
-COPY go.mod go.mod
-COPY go.sum go.sum
+COPY default.go .
+COPY main.go .
+COPY go.mod .
+COPY go.sum .
 # Get go packages.
 RUN go mod download
 # Build.
