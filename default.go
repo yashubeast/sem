@@ -78,6 +78,26 @@ func init() {
 				Handler: commands.SlashPurge,
 			},
 
+			"conversation": {
+				Definition: &discordgo.ApplicationCommand{
+					Name: "conversation",
+					Description: "Create a private-channel.",
+					DefaultMemberPermissions: func() *int64 {
+						p := int64(discordgo.PermissionAdministrator)
+						return &p
+					}(),
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Type: discordgo.ApplicationCommandOptionUser,
+							Name: "user",
+							Description: "Add this member to the private-channel.",
+							Required: true,
+						},
+					},
+				},
+				Handler: commands.SlashConversation,
+			},
+
 		},
 	})
 }
