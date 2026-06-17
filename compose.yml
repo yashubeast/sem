@@ -1,7 +1,7 @@
 services:
 
   bot:
-    build: .
+    image: semplate
     container_name: bot
     environment:
       - "TOKEN=123"

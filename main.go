@@ -1,5 +1,7 @@
 package main
 
+// TODO: add fallback alerts for "no-permission to do x action"
+
 import (
 	"os"
 

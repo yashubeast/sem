@@ -3,6 +3,7 @@ package main
 import (
 	"semplate/bot"
 	"semplate/commands"
+	"semplate/routines"
 
 	"github.com/bwmarrin/discordgo"
 )
@@ -12,6 +13,9 @@ var Bot *bot.Bot
 func init() {
 	Bot, _ = bot.New(bot.Config{
 		Prefix: ",",
+		OnReady: func(s *discordgo.Session, event *discordgo.Ready) {
+			routines.StartAnimeNotify(s)
+		},
 		Commands: map[string]bot.CommandTemplate{
 			"ping": commands.Ping,
 			"say": commands.Say,
