@@ -5,4 +5,4 @@ services:
     container_name: bot
     environment:
       - "TOKEN=123"
-    restart: always
+    restart: unless-stopped
