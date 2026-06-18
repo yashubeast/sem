@@ -1,6 +1,6 @@
 services:
 
-  bot:
+  semplate:
     image: semplate
     container_name: bot
     environment:
