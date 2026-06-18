@@ -4,5 +4,5 @@ services:
     image: semplate
     container_name: bot
     environment:
-      - "TOKEN=123"
+      TOKEN: ${TOKEN}
     restart: unless-stopped
