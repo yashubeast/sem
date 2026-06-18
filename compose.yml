@@ -2,7 +2,7 @@ services:
 
   semplate:
     image: semplate
-    container_name: bot
+    container_name: semplate
     environment:
       TOKEN: ${TOKEN}
     restart: unless-stopped
