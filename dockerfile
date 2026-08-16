@@ -5,6 +5,7 @@ WORKDIR /build
 COPY bot bot
 COPY commands commands
 COPY routines routines
+COPY config config
 COPY default.go .
 COPY main.go .
 COPY go.mod .
