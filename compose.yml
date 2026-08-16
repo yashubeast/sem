@@ -5,4 +5,6 @@ services:
     container_name: semplate
     environment:
       TOKEN: ${TOKEN}
+    volumes:
+      - ./data:/app/data
     restart: unless-stopped

@@ -22,13 +22,13 @@ var (
 	AppConfig  ConfigFile
 )
 
-// Returns the path to config.json located next to the running executable.
+// Returns the path to config.json inside the ./data directory.
 func GetConfigFilePath() (string, error) {
-	execPath, err := os.Executable()
-	if err != nil {
+	dir := "data"
+	if err := os.MkdirAll(dir, 0755); err != nil {
 		return "", err
 	}
-	return filepath.Join(filepath.Dir(execPath), "config.json"), nil
+	return filepath.Join(dir, "config.json"), nil
 }
 
 // Loads the configuration file into memory. Creates a default file if missing.
