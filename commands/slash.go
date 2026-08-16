@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"math/rand"
 	"time"
+	"semplate/config"
+	"log/slog"
 
 	"github.com/bwmarrin/discordgo"
 )
@@ -152,4 +154,75 @@ func SlashConversation(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		Content: "Created private-channel: <#" + channel.ID + ">",
 		Flags: discordgo.MessageFlagsEphemeral,
 	})
+}
+
+// Handles anime notification commands and subcommands.
+func SlashAnimeNotify(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	options := i.ApplicationCommandData().Options
+	if len(options) == 0 {
+		return
+	}
+
+	subcommand := options[0]
+	switch subcommand.Name {
+	case "add_channel":
+		subOptions := subcommand.Options
+		if len(subOptions) == 0 {
+			return
+		}
+
+		channel := subOptions[0].ChannelValue(s)
+		channelID := channel.ID
+
+		// Save channel ID to config.
+		if err := config.AddAnimeNotifyChannel(channelID); err != nil {
+			slog.Error("Failed to save notification channel to config", "err", err)
+			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Content: "Failed to update configuration file.",
+					Flags:   discordgo.MessageFlagsEphemeral,
+				},
+			})
+			return
+		}
+
+		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: &discordgo.InteractionResponseData{
+				Content: fmt.Sprintf("Registered <#%s> for anime notifications.", channelID),
+				Flags:   discordgo.MessageFlagsEphemeral,
+			},
+		})
+
+	case "remove_channel":
+		subOptions := subcommand.Options
+		if len(subOptions) == 0 {
+			return
+		}
+
+		channel := subOptions[0].ChannelValue(s)
+		channelID := channel.ID
+
+		if err := config.RemoveAnimeNotifyChannel(channelID); err != nil {
+			slog.Error("Failed to remove notification channel from config", "err", err)
+			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Content: "Failed to update configuration file.",
+					Flags:   discordgo.MessageFlagsEphemeral,
+				},
+			})
+			return
+		}
+
+		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: &discordgo.InteractionResponseData{
+				Content: fmt.Sprintf("Removed <#%s> from anime notifications.", channelID),
+				Flags:   discordgo.MessageFlagsEphemeral,
+			},
+		})
+
+	}
 }

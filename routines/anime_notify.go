@@ -13,12 +13,12 @@ import (
 	"log/slog"
 	"net/http"
 	"time"
+	"semplate/config"
 
 	"github.com/bwmarrin/discordgo"
 )
 
 const (
-	notifyChannelID = "1222206532041838637"
 	anilistEndpoint = "https://graphql.anilist.co"
 )
 
@@ -182,11 +182,10 @@ func fetchAiredBetween(from, to int64) ([]episode, error) {
 	return all, nil
 }
 
-// Sends a Discord embed to the notification channel.
+// Sends a Discord embed to every registered notification channel.
 func notify(s *discordgo.Session, title string, episode int, totalEpisodes int, airedAt int64, url, thumbnail string) {
 	airedTime := time.Unix(airedAt, 0)
 
-	// format episode string based on whether total episode count is known
 	var episodeStringPrefix string = fmt.Sprintf("**Episode %d** just aired!\n", episode)
 	var episodeString string = ""
 	if totalEpisodes > 0 {
@@ -204,9 +203,12 @@ func notify(s *discordgo.Session, title string, episode int, totalEpisodes int, 
 		},
 	}
 
-	if _, err := s.ChannelMessageSendEmbed(notifyChannelID, embed); err != nil {
-		slog.Error("Failed to send notification", "title", title, "episode", episode, "err", err)
-	} else {
-		slog.Info("Notified", "title", title, "episode", episode)
+	channels := config.GetAnimeNotifyChannels()
+	for _, channelID := range channels {
+		if _, err := s.ChannelMessageSendEmbed(channelID, embed); err != nil {
+			slog.Error("Failed to send notification", "channel", channelID, "title", title, "episode", episode, "err", err)
+		} else {
+			slog.Info("Notified", "channel", channelID, "title", title, "episode", episode)
+		}
 	}
 }

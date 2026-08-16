@@ -102,6 +102,48 @@ func init() {
 				Handler: commands.SlashConversation,
 			},
 
+			"anime_notify": {
+				Definition: &discordgo.ApplicationCommand{
+					Name:        "anime_notify",
+					Description: "Manage anime notification settings.",
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Type:        discordgo.ApplicationCommandOptionSubCommand,
+							Name:        "add_channel",
+							Description: "Set a channel for anime notifications.",
+							Options: []*discordgo.ApplicationCommandOption{
+								{
+									Type:        discordgo.ApplicationCommandOptionChannel,
+									Name:        "channel",
+									Description: "The channel to send notifications in.",
+									Required:    true,
+									ChannelTypes: []discordgo.ChannelType{
+										discordgo.ChannelTypeGuildText,
+									},
+								},
+							},
+						},
+						{
+							Type:        discordgo.ApplicationCommandOptionSubCommand,
+							Name:        "remove_channel",
+							Description: "Remove a channel from anime notifications.",
+							Options: []*discordgo.ApplicationCommandOption{
+								{
+									Type:        discordgo.ApplicationCommandOptionChannel,
+									Name:        "channel",
+									Description: "The channel to stop sending notifications in.",
+									Required:    true,
+									ChannelTypes: []discordgo.ChannelType{
+										discordgo.ChannelTypeGuildText,
+									},
+								},
+							},
+						},
+					},
+				},
+				Handler: commands.SlashAnimeNotify,
+			},
+
 		},
 	})
 }
