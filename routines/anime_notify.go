@@ -14,6 +14,7 @@ import (
 	"net/http"
 	"time"
 	"semplate/config"
+	"regexp"
 
 	"github.com/bwmarrin/discordgo"
 )
@@ -108,11 +109,11 @@ func tick(s *discordgo.Session) {
 	slog.Info("Tick", "window_from", from, "window_to", to, "episodes_found", len(episodes))
 
 	for _, ep := range episodes {
-		title := ep.Media.Title.English
-		if title == "" {
-			title = ep.Media.Title.Romaji
+		displayTitle := ep.Media.Title.English
+		if displayTitle == "" {
+			displayTitle = ep.Media.Title.Romaji
 		}
-		notify(s, title, ep.Episode, ep.TotalEpisodes, ep.AiringAt, ep.Media.SiteUrl, ep.Media.CoverImage.Medium)
+		notify(s, displayTitle, ep.Media.Title.English, ep.Media.Title.Romaji, ep.Episode, ep.TotalEpisodes, ep.AiringAt, ep.Media.SiteUrl, ep.Media.CoverImage.Medium)
 	}
 }
 
@@ -182,8 +183,9 @@ func fetchAiredBetween(from, to int64) ([]episode, error) {
 	return all, nil
 }
 
-// Sends a Discord embed to every registered notification channel.
-func notify(s *discordgo.Session, title string, episode int, totalEpisodes int, airedAt int64, url, thumbnail string) {
+// Sends a Discord embed to every registered notification channel whose whitelist matches.
+// titleEnglish/titleRomaji are checked against each channel's patterns; displayTitle is just what's shown.
+func notify(s *discordgo.Session, displayTitle, titleEnglish, titleRomaji string, episode int, totalEpisodes int, airedAt int64, url, thumbnail string) {
 	airedTime := time.Unix(airedAt, 0)
 
 	var episodeStringPrefix string = fmt.Sprintf("**Episode %d** just aired!\n", episode)
@@ -193,7 +195,7 @@ func notify(s *discordgo.Session, title string, episode int, totalEpisodes int, 
 	}
 
 	embed := &discordgo.MessageEmbed{
-		Title:       fmt.Sprintf("New Episode — %s", title),
+		Title:       fmt.Sprintf("New Episode — %s", displayTitle),
 		Description: episodeStringPrefix + episodeString,
 		URL:         url,
 		Color:       0x02A9FF,
@@ -204,11 +206,35 @@ func notify(s *discordgo.Session, title string, episode int, totalEpisodes int, 
 	}
 
 	channels := config.GetAnimeNotifyChannels()
-	for _, channelID := range channels {
+	for channelID, patterns := range channels {
+		if !animeMatchesWhitelist(patterns, titleEnglish, titleRomaji) {
+			continue
+		}
 		if _, err := s.ChannelMessageSendEmbed(channelID, embed); err != nil {
-			slog.Error("Failed to send notification", "channel", channelID, "title", title, "episode", episode, "err", err)
+			slog.Error("Failed to send notification", "channel", channelID, "title", displayTitle, "episode", episode, "err", err)
 		} else {
-			slog.Info("Notified", "channel", channelID, "title", title, "episode", episode)
+			slog.Info("Notified", "channel", channelID, "title", displayTitle, "episode", episode)
 		}
 	}
+}
+
+// Returns true if any title matches any pattern (case-insensitive substring/regex).
+// An empty pattern list means "match everything".
+func animeMatchesWhitelist(patterns []string, titles ...string) bool {
+	if len(patterns) == 0 {
+		return true
+	}
+	for _, pattern := range patterns {
+		re, err := regexp.Compile("(?i)" + pattern)
+		if err != nil {
+			slog.Error("Invalid whitelist regex, skipping", "pattern", pattern, "err", err)
+			continue
+		}
+		for _, title := range titles {
+			if title != "" && re.MatchString(title) {
+				return true
+			}
+		}
+	}
+	return false
 }

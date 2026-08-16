@@ -6,6 +6,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"regexp"
 	"sync"
 )
 
@@ -14,7 +15,9 @@ type ConfigFile struct {
 }
 
 type AnimeNotifyConfig struct {
-	Channels []string `json:"channels"`
+	// Channels maps a channel ID to a list of regex patterns (case-insensitive).
+	// An empty pattern list means "notify for everything" (no filter).
+	Channels map[string][]string `json:"channels"`
 }
 
 var (
@@ -44,61 +47,125 @@ func LoadConfig() error {
 	data, err := os.ReadFile(path)
 	if errors.Is(err, os.ErrNotExist) {
 		AppConfig = ConfigFile{
-			AnimeNotify: AnimeNotifyConfig{Channels: []string{}},
+			AnimeNotify: AnimeNotifyConfig{Channels: map[string][]string{}},
 		}
 		return saveConfigUnlocked(path)
 	} else if err != nil {
 		return err
 	}
 
-	return json.Unmarshal(data, &AppConfig)
+	if err := json.Unmarshal(data, &AppConfig); err != nil {
+		return err
+	}
+	if AppConfig.AnimeNotify.Channels == nil {
+		AppConfig.AnimeNotify.Channels = map[string][]string{}
+	}
+	return nil
 }
 
-// Thread-safe function to add a channel and persist changes.
+// Registers a channel for anime notifications (no filter by default).
 func AddAnimeNotifyChannel(channelID string) error {
 	configLock.Lock()
 	defer configLock.Unlock()
 
-	// Prevent duplicates
-	if slices.Contains(AppConfig.AnimeNotify.Channels, channelID) {
-			return nil
-		}
-
-	AppConfig.AnimeNotify.Channels = append(AppConfig.AnimeNotify.Channels, channelID)
+	if _, ok := AppConfig.AnimeNotify.Channels[channelID]; ok {
+		return nil // already registered
+	}
+	AppConfig.AnimeNotify.Channels[channelID] = []string{}
 
 	path, err := GetConfigFilePath()
 	if err != nil {
 		return err
 	}
-
 	return saveConfigUnlocked(path)
 }
 
-// Thread-safe function to remove a channel and persist changes.
+// Removes a channel from anime notifications entirely (including its whitelist).
 func RemoveAnimeNotifyChannel(channelID string) error {
 	configLock.Lock()
 	defer configLock.Unlock()
 
-	idx := slices.Index(AppConfig.AnimeNotify.Channels, channelID)
-	if idx == -1 {
-		return nil // not present, nothing to do
+	if _, ok := AppConfig.AnimeNotify.Channels[channelID]; !ok {
+		return nil
 	}
-
-	AppConfig.AnimeNotify.Channels = slices.Delete(AppConfig.AnimeNotify.Channels, idx, idx+1)
+	delete(AppConfig.AnimeNotify.Channels, channelID)
 
 	path, err := GetConfigFilePath()
 	if err != nil {
 		return err
 	}
-
 	return saveConfigUnlocked(path)
 }
 
-// Returns a copy of the currently configured anime-notify channels.
-func GetAnimeNotifyChannels() []string {
+// Adds a whitelist regex pattern to a channel, auto-registering the channel if needed.
+// Returns an error if the pattern doesn't compile as a regex.
+func AddAnimeWhitelistPattern(channelID, pattern string) error {
+	if _, err := regexp.Compile("(?i)" + pattern); err != nil {
+		return errors.New("invalid pattern: " + err.Error())
+	}
+
+	configLock.Lock()
+	defer configLock.Unlock()
+
+	patterns := AppConfig.AnimeNotify.Channels[channelID]
+	if slices.Contains(patterns, pattern) {
+			return nil // already whitelisted
+		}
+	AppConfig.AnimeNotify.Channels[channelID] = append(patterns, pattern)
+
+	path, err := GetConfigFilePath()
+	if err != nil {
+		return err
+	}
+	return saveConfigUnlocked(path)
+}
+
+// Removes a whitelist pattern from a channel.
+func RemoveAnimeWhitelistPattern(channelID, pattern string) error {
+	configLock.Lock()
+	defer configLock.Unlock()
+
+	patterns, ok := AppConfig.AnimeNotify.Channels[channelID]
+	if !ok {
+		return nil
+	}
+
+	idx := -1
+	for i, p := range patterns {
+		if p == pattern {
+			idx = i
+			break
+		}
+	}
+	if idx == -1 {
+		return nil
+	}
+	AppConfig.AnimeNotify.Channels[channelID] = append(patterns[:idx], patterns[idx+1:]...)
+
+	path, err := GetConfigFilePath()
+	if err != nil {
+		return err
+	}
+	return saveConfigUnlocked(path)
+}
+
+// Returns a snapshot of channelID -> whitelist patterns.
+func GetAnimeNotifyChannels() map[string][]string {
 	configLock.RLock()
 	defer configLock.RUnlock()
-	return slices.Clone(AppConfig.AnimeNotify.Channels)
+
+	out := make(map[string][]string, len(AppConfig.AnimeNotify.Channels))
+	for k, v := range AppConfig.AnimeNotify.Channels {
+		out[k] = append([]string{}, v...)
+	}
+	return out
+}
+
+// Returns the whitelist patterns for a single channel.
+func GetAnimeWhitelist(channelID string) []string {
+	configLock.RLock()
+	defer configLock.RUnlock()
+	return append([]string{}, AppConfig.AnimeNotify.Channels[channelID]...)
 }
 
 // Atomically writes config to disk using a temporary file.

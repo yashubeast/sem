@@ -107,6 +107,8 @@ func init() {
 					Name:        "anime_notify",
 					Description: "Manage anime notification settings.",
 					Options: []*discordgo.ApplicationCommandOption{
+
+						// Channel whitelisting commands.
 						{
 							Type:        discordgo.ApplicationCommandOptionSubCommand,
 							Name:        "add_channel",
@@ -139,6 +141,69 @@ func init() {
 								},
 							},
 						},
+
+						// Anime whitelisting commands.
+						{
+							Type:        discordgo.ApplicationCommandOptionSubCommand,
+							Name:        "whitelist_anime",
+							Description: "Only notify a channel for anime matching this pattern.",
+							Options: []*discordgo.ApplicationCommandOption{
+								{
+									Type:        discordgo.ApplicationCommandOptionChannel,
+									Name:        "channel",
+									Description: "The channel to whitelist for.",
+									Required:    true,
+									ChannelTypes: []discordgo.ChannelType{
+										discordgo.ChannelTypeGuildText,
+									},
+								},
+								{
+									Type:        discordgo.ApplicationCommandOptionString,
+									Name:        "pattern",
+									Description: "Text/regex to match titles against, e.g. \"one piece\" or \"dying day\".",
+									Required:    true,
+								},
+							},
+						},
+						{
+							Type:        discordgo.ApplicationCommandOptionSubCommand,
+							Name:        "unwhitelist_anime",
+							Description: "Remove a whitelist pattern from a channel.",
+							Options: []*discordgo.ApplicationCommandOption{
+								{
+									Type:        discordgo.ApplicationCommandOptionChannel,
+									Name:        "channel",
+									Description: "The channel to remove the pattern from.",
+									Required:    true,
+									ChannelTypes: []discordgo.ChannelType{
+										discordgo.ChannelTypeGuildText,
+									},
+								},
+								{
+									Type:        discordgo.ApplicationCommandOptionString,
+									Name:        "pattern",
+									Description: "The exact pattern string to remove.",
+									Required:    true,
+								},
+							},
+						},
+						{
+							Type:        discordgo.ApplicationCommandOptionSubCommand,
+							Name:        "list_whitelist",
+							Description: "List whitelist patterns for a channel.",
+							Options: []*discordgo.ApplicationCommandOption{
+								{
+									Type:        discordgo.ApplicationCommandOptionChannel,
+									Name:        "channel",
+									Description: "The channel to inspect.",
+									Required:    true,
+									ChannelTypes: []discordgo.ChannelType{
+										discordgo.ChannelTypeGuildText,
+									},
+								},
+							},
+						},
+
 					},
 				},
 				Handler: commands.SlashAnimeNotify,

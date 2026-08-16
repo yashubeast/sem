@@ -6,6 +6,7 @@ import (
 	"time"
 	"semplate/config"
 	"log/slog"
+	"strings"
 
 	"github.com/bwmarrin/discordgo"
 )
@@ -220,6 +221,82 @@ func SlashAnimeNotify(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
 			Data: &discordgo.InteractionResponseData{
 				Content: fmt.Sprintf("Removed <#%s> from anime notifications.", channelID),
+				Flags:   discordgo.MessageFlagsEphemeral,
+			},
+		})
+
+	case "whitelist_anime":
+		subOptions := subcommand.Options
+		if len(subOptions) < 2 {
+			return
+		}
+		channel := subOptions[0].ChannelValue(s)
+		pattern := subOptions[1].StringValue()
+
+		if err := config.AddAnimeWhitelistPattern(channel.ID, pattern); err != nil {
+			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Content: fmt.Sprintf("Failed to add pattern: %s", err.Error()),
+					Flags:   discordgo.MessageFlagsEphemeral,
+				},
+			})
+			return
+		}
+
+		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: &discordgo.InteractionResponseData{
+				Content: fmt.Sprintf("Whitelisted `%s` for <#%s>.", pattern, channel.ID),
+				Flags:   discordgo.MessageFlagsEphemeral,
+			},
+		})
+
+	case "unwhitelist_anime":
+		subOptions := subcommand.Options
+		if len(subOptions) < 2 {
+			return
+		}
+		channel := subOptions[0].ChannelValue(s)
+		pattern := subOptions[1].StringValue()
+
+		if err := config.RemoveAnimeWhitelistPattern(channel.ID, pattern); err != nil {
+			slog.Error("Failed to remove whitelist pattern", "err", err)
+			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Content: "Failed to update configuration file.",
+					Flags:   discordgo.MessageFlagsEphemeral,
+				},
+			})
+			return
+		}
+
+		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: &discordgo.InteractionResponseData{
+				Content: fmt.Sprintf("Removed `%s` from <#%s>'s whitelist.", pattern, channel.ID),
+				Flags:   discordgo.MessageFlagsEphemeral,
+			},
+		})
+
+	case "list_whitelist":
+		subOptions := subcommand.Options
+		if len(subOptions) == 0 {
+			return
+		}
+		channel := subOptions[0].ChannelValue(s)
+		patterns := config.GetAnimeWhitelist(channel.ID)
+
+		content := fmt.Sprintf("No whitelist patterns for <#%s> — all anime are notified there.", channel.ID)
+		if len(patterns) > 0 {
+			content = fmt.Sprintf("Whitelist patterns for <#%s>:\n- %s", channel.ID, strings.Join(patterns, "\n- "))
+		}
+
+		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: &discordgo.InteractionResponseData{
+				Content: content,
 				Flags:   discordgo.MessageFlagsEphemeral,
 			},
 		})
