@@ -37,6 +37,7 @@ query ($from: Int, $to: Int, $page: Int) {
       episode
       airingAt
       media {
+				episodes
         title { romaji english }
         siteUrl
         coverImage { medium }
@@ -61,6 +62,7 @@ type anilistResponse struct {
 				Episode  int   `json:"episode"`
 				AiringAt int64 `json:"airingAt"`
 				Media    struct {
+					Episodes int `json:"episodes"`
 					Title struct {
 						Romaji  string `json:"romaji"`
 						English string `json:"english"`
@@ -110,12 +112,13 @@ func tick(s *discordgo.Session) {
 		if title == "" {
 			title = ep.Media.Title.Romaji
 		}
-		notify(s, title, ep.Episode, ep.AiringAt, ep.Media.SiteUrl, ep.Media.CoverImage.Medium)
+		notify(s, title, ep.Episode, ep.TotalEpisodes, ep.AiringAt, ep.Media.SiteUrl, ep.Media.CoverImage.Medium)
 	}
 }
 
 type episode struct {
 	Episode  int
+	TotalEpisodes int
 	AiringAt int64
 	Media    struct {
 		Title      struct{ Romaji, English string }
@@ -156,6 +159,7 @@ func fetchAiredBetween(from, to int64) ([]episode, error) {
 		for _, s := range result.Data.Page.AiringSchedules {
 			all = append(all, episode{
 				Episode:  s.Episode,
+				TotalEpisodes: s.Media.Episodes,
 				AiringAt: s.AiringAt,
 				Media: struct {
 					Title      struct{ Romaji, English string }
@@ -179,12 +183,19 @@ func fetchAiredBetween(from, to int64) ([]episode, error) {
 }
 
 // Sends a Discord embed to the notification channel.
-func notify(s *discordgo.Session, title string, episode int, airedAt int64, url, thumbnail string) {
+func notify(s *discordgo.Session, title string, episode int, totalEpisodes int, airedAt int64, url, thumbnail string) {
 	airedTime := time.Unix(airedAt, 0)
+
+	// format episode string based on whether total episode count is known
+	var episodeStringPrefix string = fmt.Sprintf("**Episode %d** just aired!\n", episode)
+	var episodeString string = ""
+	if totalEpisodes > 0 {
+		episodeString = fmt.Sprintf("*%d/%d*", episode, totalEpisodes)
+	}
 
 	embed := &discordgo.MessageEmbed{
 		Title:       fmt.Sprintf("New Episode — %s", title),
-		Description: fmt.Sprintf("**Episode %d** just aired!", episode),
+		Description: episodeStringPrefix + episodeString,
 		URL:         url,
 		Color:       0x02A9FF,
 		Thumbnail:   &discordgo.MessageEmbedThumbnail{URL: thumbnail},
