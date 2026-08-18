@@ -26,6 +26,7 @@ func init() {
 			"coinflip": SlashCoinflipEntry,
 			"purge": SlashPurgeEntry,
 			"conversation": SlashConversationEntry,
+			"media": SlashMediaEntry,
 			"anime_notify": SlashAnimeNotifyEntry,
 		},
 	})
@@ -109,6 +110,22 @@ var SlashConversationEntry = bot.SlashCommandEntry{
 		},
 	},
 	Handler: commands.SlashConversation,
+}
+
+var SlashMediaEntry = bot.SlashCommandEntry{
+	Definition: &discordgo.ApplicationCommand{
+		Name:        "media",
+		Description: "Convert links to include embeds. Supported: instagram",
+		Options: []*discordgo.ApplicationCommandOption{
+			{
+				Type:        discordgo.ApplicationCommandOptionString,
+				Name:        "url",
+				Description: "The url duh",
+				Required:    true,
+			},
+		},
+	},
+	Handler: commands.SlashMedia,
 }
 
 var SlashAnimeNotifyEntry = bot.SlashCommandEntry{

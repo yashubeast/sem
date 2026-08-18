@@ -2,11 +2,12 @@ package commands
 
 import (
 	"fmt"
-	"math/rand"
-	"time"
-	"semplate/config"
 	"log/slog"
+	"math/rand"
+	"net/url"
+	"semplate/config"
 	"strings"
+	"time"
 
 	"github.com/bwmarrin/discordgo"
 )
@@ -154,6 +155,44 @@ func SlashConversation(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	s.FollowupMessageCreate(i.Interaction, true, &discordgo.WebhookParams{
 		Content: "Created private-channel: <#" + channel.ID + ">",
 		Flags: discordgo.MessageFlagsEphemeral,
+	})
+}
+
+// Transforms supported media URLs to support embed for platforms like discord.
+func SlashMedia(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	opts := i.ApplicationCommandData().Options
+	if len(opts) == 0 {
+		return
+	}
+
+	rawURL := opts[0].StringValue()
+
+	// Parse the URL
+	parsedURL, err := url.Parse(rawURL)
+	if err != nil || parsedURL.Scheme == "" || parsedURL.Host == "" {
+		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: &discordgo.InteractionResponseData{
+				Content: "Invalid URL provided.",
+				Flags:   discordgo.MessageFlagsEphemeral,
+			},
+		})
+		return
+	}
+
+	originalURL := parsedURL.String()
+
+	// Replace instagram host variations with kkinstagram.com
+	host := strings.ToLower(parsedURL.Host)
+	if host == "instagram.com" || host == "www.instagram.com" {
+		parsedURL.Host = "kkinstagram.com"
+	}
+
+	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{
+			Content: fmt.Sprintf("[embeded](%s) [original](<%s>)", parsedURL.String(), originalURL),
+		},
 	})
 }
 
