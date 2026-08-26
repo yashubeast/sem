@@ -1,10 +1,6 @@
 package routines
 
-// TODO: fetch specific animes only
-// TODO: a command to whitelist notifying animes (admin only).
-// TODO: server specific notifying, and whitelisting.
 // TODO: allow user specific notifying in dms (a single user can make the bot notify them in dms)
-// TODO: store data in json/sql
 
 import (
 	"bytes"
