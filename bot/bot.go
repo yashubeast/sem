@@ -6,6 +6,8 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"regexp"
+	"semplate/ai"
 
 	"github.com/bwmarrin/discordgo"
 )
@@ -15,6 +17,13 @@ type CommandTemplate func(s *discordgo.Session, m *discordgo.MessageCreate, args
 // Slash Command template.
 type SlashCommandTemplate func(s *discordgo.Session, i *discordgo.InteractionCreate)
 type SlashCommandEntry struct { Definition *discordgo.ApplicationCommand; Handler SlashCommandTemplate }
+// AI.
+type AIConfig struct {
+	Enabled bool
+	ReplyToMentions bool
+	NamePatterns []string
+	SystemPrompt string
+}
 
 // Config for unique bots.
 type Config struct {
@@ -23,6 +32,7 @@ type Config struct {
 	Commands map[string]CommandTemplate
 	SlashCommands map[string]SlashCommandEntry
 	GuildID string // Optional: empty = global, set = guild-only (instant registration)
+	AI AIConfig
 }
 
 // Unique bot with its own commands, discord-bot-application and others.
@@ -48,6 +58,7 @@ func (b *Bot) Run(token string) error {
 
 	b.session.Identify.Intents |= discordgo.IntentsGuilds
 	b.session.Identify.Intents |= discordgo.IntentsGuildMessages
+	b.session.Identify.Intents |= discordgo.IntentsMessageContent
 
 	if err := b.session.Open(); err != nil { return fmt.Errorf("Failed to open session: %w", err) }
 	defer b.session.Close()
@@ -73,6 +84,12 @@ func (b *Bot) ready(s *discordgo.Session, event *discordgo.Ready) {
 func (b *Bot) messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	// Ignore messages from self.
 	if m.Author.ID == s.State.User.ID { return }
+
+	// Detect of bot is mentioned in a chat, or mentioned literally.
+	if b.config.AI.Enabled && b.shouldAIReply(s, m) {
+		b.handleAIMessage(s, m)
+		return
+	}
 
 	prefix := b.config.Prefix
 	if len(m.Content) <= len(prefix) || m.Content[:len(prefix)] != prefix { return }
@@ -106,4 +123,47 @@ func (b *Bot) interactionCreate(s *discordgo.Session, i *discordgo.InteractionCr
     entry, ok := b.config.SlashCommands[name]
     if !ok { return }
     entry.Handler(s, i)
+}
+
+func (b *Bot) shouldAIReply(s *discordgo.Session, m *discordgo.MessageCreate) bool {
+	// Explicit Discord mention.
+	if b.config.AI.ReplyToMentions {
+		for _, user := range m.Mentions {
+			if user.ID == s.State.User.ID {
+				return true
+			}
+		}
+	}
+
+	// Literal name/regex patterns.
+	for _, pattern := range b.config.AI.NamePatterns {
+		re, err := regexp.Compile(pattern)
+		if err != nil {
+			slog.Error(
+				"Invalid AI name regex",
+				"pattern", pattern,
+				"err", err,
+			)
+			continue
+		}
+
+		if re.MatchString(m.Content) {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (b *Bot) handleAIMessage(s *discordgo.Session, m *discordgo.MessageCreate) {
+	response, err := ai.Ask(b.config.AI.SystemPrompt, m.Content)
+	if err != nil {
+		slog.Error("AI request failed", "err", err)
+		return
+	}
+
+	_, err = s.ChannelMessageSend(m.ChannelID, response)
+	if err != nil {
+		slog.Error("Failed to send AI response", "err", err)
+	}
 }
