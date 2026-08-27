@@ -28,7 +28,6 @@ func init() {
 			keep responses short, usually one sentence.
 			do not explain things unless asked to.
 			use tools whenever they can provide accurate information.
-			if a location is ambiguous, ask the user to clairy.
 			`,
 		},
 		Commands: map[string]bot.CommandTemplate{
