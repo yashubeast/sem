@@ -32,7 +32,7 @@ type ToolCall struct {
 
 type Tool struct {
 	Type     string       `json:"type"`
-	Function ToolFunction `json:"function"`
+	Function *ToolFunction `json:"function,omitempty"`
 }
 
 type ToolFunction struct {
@@ -167,6 +167,11 @@ func Ask(systemPrompt string, prompt string) (string, error) {
 
 		// Execute tools.
 		for _, toolCall := range message.ToolCalls {
+
+			if toolCall.Type != "function" {
+				continue
+			}
+
 			result, err := executeTool(toolCall)
 			if err != nil {
 				return "", err

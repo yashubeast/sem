@@ -20,8 +20,14 @@ func main() {
 	slog.SetDefault(logger)
 
 	// Init Env.
-	godotenv.Load()
+	if err := godotenv.Load(); err != nil {
+		slog.Error("Failed to init .env", "err", err)
+	}
 	token := os.Getenv("TOKEN")
+	if token == "" {
+		slog.Error("TOKEN is not set")
+		os.Exit(1)
+	}
 
 	// Load file configuration.
 	if err := config.LoadConfig(); err != nil {

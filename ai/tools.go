@@ -10,8 +10,11 @@ import (
 
 var Tools = []Tool{
 	{
+		Type: "browser_search",
+	},
+	{
 		Type: "function",
-		Function: ToolFunction{
+		Function: &ToolFunction{
 			Name:        "get_time",
 			Description: "Get the current time in a specific timezone. Use IANA timezone names such as Europe/Amsterdam, Europe/Berlin, or Asia/Kolkata.",
 			Parameters: map[string]any{
