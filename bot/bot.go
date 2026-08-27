@@ -5,9 +5,11 @@ import (
 	"log/slog"
 	"os"
 	"os/signal"
-	"syscall"
 	"regexp"
 	"semplate/ai"
+	"slices"
+	"strings"
+	"syscall"
 
 	"github.com/bwmarrin/discordgo"
 )
@@ -19,10 +21,11 @@ type SlashCommandTemplate func(s *discordgo.Session, i *discordgo.InteractionCre
 type SlashCommandEntry struct { Definition *discordgo.ApplicationCommand; Handler SlashCommandTemplate }
 // AI.
 type AIConfig struct {
-	Enabled bool
-	ReplyToMentions bool
-	NamePatterns []string
-	SystemPrompt string
+	Enabled             bool
+	ReplyToMentions     bool
+	NamePatterns        []string
+	SystemPrompt        string
+	ContextMessageCount int
 }
 
 // Config for unique bots.
@@ -156,9 +159,63 @@ func (b *Bot) shouldAIReply(s *discordgo.Session, m *discordgo.MessageCreate) bo
 }
 
 func (b *Bot) handleAIMessage(s *discordgo.Session, m *discordgo.MessageCreate) {
-	response, err := ai.Ask(b.config.AI.SystemPrompt, m.Content)
+
+	// Fetch previous messages + the triggering message.
+	limit := b.config.AI.ContextMessageCount 
+	messages, err := s.ChannelMessages(
+		m.ChannelID,
+		limit,
+		m.ID,
+		"",
+		"",
+	)
+	if err != nil {
+		slog.Error("Failed to fetch AI context", "err", err)
+		return
+	}
+
+	// Discord returns newest -> oldest, so reverse them.
+	slices.Reverse(messages)
+	context := make([]string, 0, len(messages)+1)
+
+	// Previous messages = context.
+	for _, msg := range messages {
+		if strings.TrimSpace(msg.Content) == "" {
+			continue
+		}
+
+		context = append(context, fmt.Sprintf(
+			"%s: %s",
+			msg.Author.Username,
+			msg.Content,
+		))
+	}
+
+	// THIS is the actual message that triggered the AI call.
+	context = append(context, fmt.Sprintf(
+		"%s: %s",
+		m.Author.Username,
+		m.Content,
+	))
+
+	contextString := strings.Join(context, "\n")
+	
+	slog.Debug("AI context",
+		"channel", m.ChannelID,
+		"messages", len(context),
+		"context", "\n" + contextString,
+	)
+
+	response, err := ai.Ask(
+		b.config.AI.SystemPrompt,
+		contextString,
+	)
 	if err != nil {
 		slog.Error("AI request failed", "err", err)
+		return
+	}
+
+	if strings.TrimSpace(response) == "" {
 		return
 	}
 

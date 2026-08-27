@@ -10,6 +10,7 @@ COPY default.go .
 COPY main.go .
 COPY go.mod .
 COPY go.sum .
+COPY systemPrompt.md
 # Get go packages.
 RUN go mod download
 # Build.

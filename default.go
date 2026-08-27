@@ -1,12 +1,16 @@
 package main
 
 import (
+	_ "embed"
 	"semplate/bot"
 	"semplate/commands"
 	"semplate/routines"
 
 	"github.com/bwmarrin/discordgo"
 )
+
+//go:embed systemPrompt.md
+var systemPrompt string
 
 var Bot *bot.Bot
 
@@ -23,12 +27,8 @@ func init() {
 				// TODO: fix this weird string bullshit
 				`(?i)\bsem\b`,
 			},
-			SystemPrompt: `
-			you are a concise discord bot.
-			keep responses short, usually one sentence.
-			do not explain things unless asked to.
-			use tools whenever they can provide accurate information.
-			`,
+			SystemPrompt: systemPrompt,
+			ContextMessageCount: 5,
 		},
 		Commands: map[string]bot.CommandTemplate{
 			"ping": commands.Ping,

@@ -4,8 +4,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"os"
+	"strings"
+	"time"
 )
 
 // TODO: throw this in default.go
@@ -47,15 +50,24 @@ type request struct {
 	ToolChoice          string    `json:"tool_choice,omitempty"`
 }
 
+type Usage struct {
+	PromptTokens     int `json:"prompt_tokens"`
+	CompletionTokens int `json:"completion_tokens"`
+	TotalTokens      int `json:"total_tokens"`
+}
+
 type response struct {
 	Choices []struct {
 		Message Message `json:"message"`
 	} `json:"choices"`
 
-	Error any `json:"error,omitempty"`
+	Usage Usage `json:"usage"`
+	Error any   `json:"error,omitempty"`
 }
 
 func call(messages []Message) (Message, error) {
+	start := time.Now()
+
 	body := request{
 		// TODO: throw model in default.go
 		Model:               "openai/gpt-oss-120b",
@@ -92,14 +104,39 @@ func call(messages []Message) (Message, error) {
 	}
 
 	if resp.StatusCode >= 400 {
-		return Message{}, fmt.Errorf("AI provider returned HTTP %d: %v", resp.StatusCode, result.Error)
+		slog.Error("AI API call failed",
+			"status", resp.StatusCode,
+			"error", result.Error,
+		)
+		return Message{}, fmt.Errorf(
+			"AI provider returned HTTP %d: %v",
+			resp.StatusCode,
+			result.Error,
+		)
 	}
 
 	if len(result.Choices) == 0 {
 		return Message{}, fmt.Errorf("AI provider returned no choices")
 	}
 
-	return result.Choices[0].Message, nil
+	message := result.Choices[0].Message
+
+	slog.Debug("AI raw response",
+		"content", message.Content,
+		"content_len", len(message.Content),
+		"tool_calls", message.ToolCalls,
+	)
+
+	slog.Info("AI API call",
+		"model", body.Model,
+		"duration", time.Since(start),
+		"prompt_tokens", result.Usage.PromptTokens,
+		"completion_tokens", result.Usage.CompletionTokens,
+		"total_tokens", result.Usage.TotalTokens,
+		"empty_response", strings.TrimSpace(message.Content) == "",
+	)
+
+	return message, nil
 }
 
 func Ask(systemPrompt string, prompt string) (string, error) {
