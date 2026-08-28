@@ -8,11 +8,44 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"sync"
 	"time"
 )
 
 // TODO: throw this in default.go
 const endpoint = "https://api.groq.com/openai/v1/chat/completions"
+
+var (
+	apiKeys     []string
+	apiKeyMu    sync.Mutex
+	apiKeyIndex int
+)
+func InitApiKeysAi() {
+	apiKeys = []string{
+		os.Getenv("API_KEY_AI_1"),
+		os.Getenv("API_KEY_AI_2"),
+		os.Getenv("API_KEY_AI_3"),
+		os.Getenv("API_KEY_AI_4"),
+		os.Getenv("API_KEY_AI_5"),
+	}
+}
+// returns API keys in round-robin order
+func nextAPIKey() (string, int) {
+	apiKeyMu.Lock()
+	defer apiKeyMu.Unlock()
+
+	for range apiKeys {
+		index := apiKeyIndex
+		key := apiKeys[apiKeyIndex]
+		apiKeyIndex = (apiKeyIndex + 1) % len(apiKeys)
+
+		if key != "" {
+			return key, index + 1
+		}
+	}
+
+	return "", 0
+}
 
 type Message struct {
 	Role       string     `json:"role"`
@@ -89,7 +122,12 @@ func call(messages []Message) (Message, error) {
 	}
 
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Bearer "+os.Getenv("API_KEY_AI"))
+	// get the next API key
+	apiKey, apiKeyNumber := nextAPIKey()
+	if apiKey == "" {
+		return Message{}, fmt.Errorf("no API keys provided")
+	}
+	req.Header.Set("Authorization", "Bearer "+apiKey)
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
@@ -128,6 +166,7 @@ func call(messages []Message) (Message, error) {
 	)
 
 	slog.Info("AI API call",
+    "api_key_number", apiKeyNumber,
 		"model", body.Model,
 		"duration", time.Since(start),
 		"prompt_tokens", result.Usage.PromptTokens,
