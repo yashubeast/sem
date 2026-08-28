@@ -212,6 +212,17 @@ func (b *Bot) handleAIMessage(s *discordgo.Session, m *discordgo.MessageCreate) 
 	)
 	if err != nil {
 		slog.Error("AI request failed", "err", err)
+
+		if err.Error() == "AI tokens exceeded" {
+			_, sendErr := s.ChannelMessageSend(
+				m.ChannelID,
+				"tokens exceeded",
+			)
+			if sendErr != nil {
+				slog.Error("failed to send token limit message in discord", "err", sendErr)
+			}
+		}
+
 		return
 	}
 

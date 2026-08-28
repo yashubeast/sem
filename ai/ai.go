@@ -146,6 +146,12 @@ func call(messages []Message) (Message, error) {
 			"status", resp.StatusCode,
 			"error", result.Error,
 		)
+
+		// distinguish rate-limit errors from other API errors
+		if resp.StatusCode == http.StatusTooManyRequests {
+			return Message{}, fmt.Errorf("AI tokens exceeded")
+		}
+
 		return Message{}, fmt.Errorf(
 			"AI provider returned HTTP %d: %v",
 			resp.StatusCode,
