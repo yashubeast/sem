@@ -3,6 +3,7 @@ package ai
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -14,6 +15,8 @@ import (
 
 // TODO: throw this in default.go
 const endpoint = "https://api.groq.com/openai/v1/chat/completions"
+var ErrAllTokensExceeded = errors.New("all AI API tokens exceeded")
+var ErrTokensExceeded = errors.New("AI API tokens exceeded")
 
 var (
 	apiKeys     []string
@@ -144,7 +147,7 @@ func call(messages []Message, apiKey string, apiKeyNumber int) (Message, error) 
 
 		// distinguish rate-limit errors from other API errors
 		if resp.StatusCode == http.StatusTooManyRequests {
-			return Message{}, fmt.Errorf("AI tokens exceeded")
+			return Message{}, ErrTokensExceeded
 		}
 
 		return Message{}, fmt.Errorf(
@@ -192,44 +195,75 @@ func Ask(systemPrompt string, prompt string) (string, error) {
 		},
 	}
 
-	// get the next API key
-	apiKey, apiKeyNumber := nextAPIKey()
-	if apiKey == "" {
+	// get amount of valid keys available
+	configuredKeys := 0
+	for _, key := range apiKeys {
+		if key != "" {
+			configuredKeys++
+		}
+	}
+	if configuredKeys == 0 {
 		return "", fmt.Errorf("no API keys provided")
 	}
 
+	// remember which keys have already been tried
+	triedKeys := make(map[int]bool)
 
-	for {
-		message, err := call(messages, apiKey, apiKeyNumber)
-		if err != nil {
-			return "", err
+	for len(triedKeys) < configuredKeys {
+		// get the next API key
+		apiKey, apiKeyNumber := nextAPIKey()
+		if apiKey == "" {
+			continue
 		}
-
-		// No tool call = final response.
-		if len(message.ToolCalls) == 0 {
-			return message.Content, nil
+		// don't try the same key twice
+		if triedKeys[apiKeyNumber] {
+			continue
 		}
+		triedKeys[apiKeyNumber] = true
 
-		// Add assistant's tool-call message.
-		messages = append(messages, message)
-
-		// Execute tools.
-		for _, toolCall := range message.ToolCalls {
-
-			if toolCall.Type != "function" {
-				continue
-			}
-
-			result, err := executeTool(toolCall)
+		for {
+			message, err := call(messages, apiKey, apiKeyNumber)
 			if err != nil {
+
+				// this key is rate limited, move to the next key
+				if errors.Is(err, ErrTokensExceeded) {
+					slog.Warn("AI API key is rate limited",
+						"api_key_number", apiKeyNumber,
+					)
+					break
+				}
+				// non-rate-limit errors should still fail normally
 				return "", err
 			}
 
-			messages = append(messages, Message{
-				Role:       "tool",
-				ToolCallID: toolCall.ID,
-				Content:    result,
-			})
+			// No tool call = final response.
+			if len(message.ToolCalls) == 0 {
+				return message.Content, nil
+			}
+
+			// Add assistant's tool-call message.
+			messages = append(messages, message)
+
+			// Execute tools.
+			for _, toolCall := range message.ToolCalls {
+
+				if toolCall.Type != "function" {
+					continue
+				}
+
+				result, err := executeTool(toolCall)
+				if err != nil {
+					return "", err
+				}
+
+				messages = append(messages, Message{
+					Role:       "tool",
+					ToolCallID: toolCall.ID,
+					Content:    result,
+				})
+			}
 		}
 	}
+	// every available token was rate limited
+	return "", ErrAllTokensExceeded
 }

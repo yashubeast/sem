@@ -9,6 +9,7 @@ import (
 	"semplate/ai"
 	"slices"
 	"strings"
+	"errors"
 	"syscall"
 
 	"github.com/bwmarrin/discordgo"
@@ -213,13 +214,15 @@ func (b *Bot) handleAIMessage(s *discordgo.Session, m *discordgo.MessageCreate) 
 	if err != nil {
 		slog.Error("AI request failed", "err", err)
 
-		if err.Error() == "AI tokens exceeded" {
+		// all API keys were rate limited
+		if errors.Is(err, ai.ErrAllTokensExceeded) {
 			_, sendErr := s.ChannelMessageSend(
 				m.ChannelID,
-				"tokens exceeded",
+				"im down",
 			)
+
 			if sendErr != nil {
-				slog.Error("failed to send token limit message in discord", "err", sendErr)
+				slog.Error("Failed to send token limit message in discord", "err", sendErr)
 			}
 		}
 
