@@ -98,7 +98,7 @@ type response struct {
 	Error any   `json:"error,omitempty"`
 }
 
-func call(messages []Message) (Message, error) {
+func call(messages []Message, apiKey string, apiKeyNumber int) (Message, error) {
 	start := time.Now()
 
 	body := request{
@@ -122,11 +122,6 @@ func call(messages []Message) (Message, error) {
 	}
 
 	req.Header.Set("Content-Type", "application/json")
-	// get the next API key
-	apiKey, apiKeyNumber := nextAPIKey()
-	if apiKey == "" {
-		return Message{}, fmt.Errorf("no API keys provided")
-	}
 	req.Header.Set("Authorization", "Bearer "+apiKey)
 
 	resp, err := http.DefaultClient.Do(req)
@@ -185,6 +180,7 @@ func call(messages []Message) (Message, error) {
 }
 
 func Ask(systemPrompt string, prompt string) (string, error) {
+
 	messages := []Message{
 		{
 			Role: "system",
@@ -196,8 +192,15 @@ func Ask(systemPrompt string, prompt string) (string, error) {
 		},
 	}
 
+	// get the next API key
+	apiKey, apiKeyNumber := nextAPIKey()
+	if apiKey == "" {
+		return "", fmt.Errorf("no API keys provided")
+	}
+
+
 	for {
-		message, err := call(messages)
+		message, err := call(messages, apiKey, apiKeyNumber)
 		if err != nil {
 			return "", err
 		}
