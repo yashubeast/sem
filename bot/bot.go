@@ -179,6 +179,24 @@ func (b *Bot) handleAIMessage(s *discordgo.Session, m *discordgo.MessageCreate) 
 	slices.Reverse(messages)
 	context := make([]string, 0, len(messages)+1)
 
+	// insert discord server and channel context into context
+	channel, err := s.Channel(m.ChannelID)
+	if err != nil {
+		slog.Error("failed to fetch channel", "err", err)
+		return
+	}
+	guild, err := s.Guild(m.GuildID)
+	if err != nil {
+		slog.Error("failed to fetch guild", "err", err)
+		return
+	}
+	context = append(context, fmt.Sprintf(
+		"[discord context]\nserver: %s\nchannel: #%s\nchannel-description: %s",
+		guild.Name,
+		channel.Name,
+		channel.Topic,
+	))
+
 	// Previous messages = context.
 	for _, msg := range messages {
 		if strings.TrimSpace(msg.Content) == "" {
