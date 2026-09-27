@@ -9,6 +9,21 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
+// NOTE: currently if a message is replying to another message that is outside ContextMessageCount
+// we add the replied message to the aiContext.Messages, without caring about the chronological order
+// for example this is how aiContext.Messages would look like, with a ContextMessageCount value 5
+// { msg 1 }
+// { msg 2 }
+// { msg 3 }
+// { msg 4 }
+// { msg 5 }
+// { msg 7 } // this is the message that isn't in the ContextMessageCount scope
+// { msg 6, ReplyTo: 7 }
+// so in conclusion, it just appends the replied message above the parent message
+// the only worry it uproots is breaking the flow of conversation in chronology :/
+// cba to fix this right now so i'll just mention this here, also can't really think of a structure to use to separate replied messages from the main conversation
+// maybe add a second aiContext.Messages[] that is specifically for messages that are relevant but not in the scope of ContextMessageCount
+
 // aiContext is the root object sent to the AI as the
 // payload. See systemPrompt.md for the schema the model is
 // expected to understand.
@@ -81,9 +96,13 @@ func (b *Bot) buildAIContext(s *discordgo.Session, m *discordgo.MessageCreate) (
 	idMap := make(map[string]int, len(history)+1)
 	nextID := 1
 
-	addMsg := func(discordID string, author *discordgo.User, member *discordgo.Member, content string, ref *discordgo.MessageReference, force bool) {
+	// addMsg appends a message to the context and returns the local id it was assigned (0 if skipped as empty).
+	// refMsg is Discord's referenced_message for this message,
+	// if it's a reply - used to recursively inject the parent when it isn't already in idMap.
+	var addMsg func(discordID string, author *discordgo.User, member *discordgo.Member, content string, ref *discordgo.MessageReference, refMsg *discordgo.Message, force bool) int
+	addMsg = func(discordID string, author *discordgo.User, member *discordgo.Member, content string, ref *discordgo.MessageReference, refMsg *discordgo.Message, force bool) int {
 		if !force && strings.TrimSpace(content) == "" {
-			return
+			return 0
 		}
 
 		local := nextID
@@ -103,6 +122,22 @@ func (b *Bot) buildAIContext(s *discordgo.Session, m *discordgo.MessageCreate) (
 		if ref != nil {
 			if localRef, ok := idMap[ref.MessageID]; ok {
 				cm.ReplyTo = localRef
+			} else if refMsg != nil {
+				// Parent isn't in idMap because it's outside our fetched window.
+				// Discord sends the replied-to message on the reply itself (no extra API call needed)
+				// inject it as its own context entry, otherwise it silently drops reply_to.
+				parentLocal := addMsg(
+					refMsg.ID,
+					refMsg.Author,
+					refMsg.Member,
+					refMsg.Content,
+					refMsg.MessageReference,
+					refMsg.ReferencedMessage,
+					true,
+				)
+				if parentLocal != 0 {
+					cm.ReplyTo = parentLocal
+				}
 			}
 			// If refMsg is also nil, Discord couldn't fetch the parent itself (deleted message fetch it)
 			// nothing much we can do without a s.ChannelMessage(...) fetch,
@@ -110,13 +145,14 @@ func (b *Bot) buildAIContext(s *discordgo.Session, m *discordgo.MessageCreate) (
 		}
 
 		ctx.Messages = append(ctx.Messages, cm)
+		return local
 	}
 
 	for _, msg := range history {
-		addMsg(msg.ID, msg.Author, msg.Member, msg.Content, msg.MessageReference, false)
+		addMsg(msg.ID, msg.Author, msg.Member, msg.Content, msg.MessageReference, msg.ReferencedMessage, false)
 	}
 	// The message that triggered this call is always included, and always last.
-	addMsg(m.ID, m.Author, m.Member, m.Content, m.MessageReference, true)
+	addMsg(m.ID, m.Author, m.Member, m.Content, m.MessageReference, m.ReferencedMessage, true)
 
 	data, err := json.Marshal(ctx)
 	if err != nil {
