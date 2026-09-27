@@ -1,6 +1,9 @@
 package bot
 
 import (
+	"bytes"
+	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -168,10 +171,12 @@ func (b *Bot) handleAIMessage(s *discordgo.Session, m *discordgo.MessageCreate) 
 		return
 	}
 
-	slog.Debug("AI context",
-		"channel", m.ChannelID,
-		"context", contextString,
-	)
+	if slog.Default().Enabled(context.Background(), slog.LevelDebug) {
+		var pretty bytes.Buffer
+		json.Indent(&pretty, []byte(contextString), "", " ")
+		slog.Debug("AI context", "channel", m.ChannelID)
+		fmt.Println(pretty.String())
+	}
 
 	response, err := ai.Ask(
 		b.config.AI.SystemPrompt,
