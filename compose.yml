@@ -1,6 +1,7 @@
 services:
 
   semplate:
+    build: .
     image: semplate
     container_name: semplate
     environment:

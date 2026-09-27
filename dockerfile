@@ -2,6 +2,7 @@
 FROM golang:1.26-alpine AS build
 WORKDIR /build
 # Copy files.
+COPY ai ai
 COPY bot bot
 COPY commands commands
 COPY routines routines
@@ -10,7 +11,7 @@ COPY default.go .
 COPY main.go .
 COPY go.mod .
 COPY go.sum .
-COPY systemPrompt.md
+COPY systemPrompt.md .
 # Get go packages.
 RUN go mod download
 # Build.
