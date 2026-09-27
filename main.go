@@ -13,17 +13,18 @@ import (
 
 func main() {
 
-	// Init slog.
-	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
-		Level: slog.LevelInfo,
-		// Level: slog.LevelDebug,
-	}))
-	slog.SetDefault(logger)
-
 	// Init Env.
 	if err := godotenv.Load(); err != nil {
 		slog.Error("Failed to init .env", "err", err)
 	}
+
+	// Init slog.
+	logLevel := slog.LevelInfo
+	if os.Getenv("SEM_DEBUG") == "true" { logLevel = slog.LevelDebug }
+	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: logLevel,
+	}))
+	slog.SetDefault(logger)
 
 	// Fetch discord bot token.
 	token := os.Getenv("TOKEN")
