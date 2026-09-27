@@ -5,8 +5,8 @@ package main
 import (
 	"log/slog"
 	"os"
-	"semplate/ai"
-	"semplate/config"
+	"sem/ai"
+	"sem/config"
 
 	"github.com/joho/godotenv"
 )
@@ -25,14 +25,14 @@ func main() {
 		slog.Error("Failed to init .env", "err", err)
 	}
 
-	// fetch discord bot token
+	// Fetch discord bot token.
 	token := os.Getenv("TOKEN")
 	if token == "" {
 		slog.Error("TOKEN is not set")
 		os.Exit(1)
 	}
 
-	// fetch api keys for ai
+	// Fetch api keys for AI.
 	ai.InitApiKeysAi()
 
 	// Load file configuration.

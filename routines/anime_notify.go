@@ -9,7 +9,7 @@ import (
 	"log/slog"
 	"net/http"
 	"time"
-	"semplate/config"
+	"sem/config"
 	"regexp"
 
 	"github.com/bwmarrin/discordgo"

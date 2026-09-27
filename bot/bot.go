@@ -6,7 +6,7 @@ import (
 	"os"
 	"os/signal"
 	"regexp"
-	"semplate/ai"
+	"sem/ai"
 	"slices"
 	"strings"
 	"errors"
@@ -85,12 +85,34 @@ func (b *Bot) ready(s *discordgo.Session, event *discordgo.Ready) {
 	}
 }
 
+func (b *Bot) registerSlashCommands() {
+	for _, entry := range b.config.SlashCommands {
+		_, err := b.session.ApplicationCommandCreate(
+			b.session.State.User.ID,
+			b.config.GuildID,
+			entry.Definition,
+		)
+		if err != nil { slog.Error("Failed to register slash command", "name", entry.Definition.Name, "err", err) }
+	}
+}
+
+// Handle Slash commands.
+func (b *Bot) interactionCreate(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	if i.Type != discordgo.InteractionApplicationCommand { return }
+
+	name := i.ApplicationCommandData().Name
+	entry, ok := b.config.SlashCommands[name]
+	if !ok { return }
+	entry.Handler(s, i)
+}
+
+// Handle Prefix commands.
 func (b *Bot) messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	// Ignore messages from self.
 	if m.Author.ID == s.State.User.ID { return }
 
 	// Detect of bot is mentioned in a chat, or mentioned literally.
-	if b.config.AI.Enabled && b.shouldAIReply(s, m) {
+	if b.config.AI.Enabled && b.isAiMentioned(s, m) {
 		b.handleAIMessage(s, m)
 		return
 	}
@@ -109,27 +131,7 @@ func (b *Bot) messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	handler(s, m, args)
 }
 
-func (b *Bot) registerSlashCommands() {
-	for _, entry := range b.config.SlashCommands {
-		_, err := b.session.ApplicationCommandCreate(
-			b.session.State.User.ID,
-			b.config.GuildID,
-			entry.Definition,
-		)
-		if err != nil { slog.Error("Failed to register slash command", "name", entry.Definition.Name, "err", err) }
-	}
-}
-
-func (b *Bot) interactionCreate(s *discordgo.Session, i *discordgo.InteractionCreate) {
-    if i.Type != discordgo.InteractionApplicationCommand { return }
-
-    name := i.ApplicationCommandData().Name
-    entry, ok := b.config.SlashCommands[name]
-    if !ok { return }
-    entry.Handler(s, i)
-}
-
-func (b *Bot) shouldAIReply(s *discordgo.Session, m *discordgo.MessageCreate) bool {
+func (b *Bot) isAiMentioned(s *discordgo.Session, m *discordgo.MessageCreate) bool {
 	// Explicit Discord mention.
 	if b.config.AI.ReplyToMentions {
 		for _, user := range m.Mentions {
@@ -247,6 +249,9 @@ func (b *Bot) handleAIMessage(s *discordgo.Session, m *discordgo.MessageCreate) 
 		return
 	}
 
+	// Do not send a message to discord, if LLM replies in matching strings.
+	// This is for when users mention the AI in a context where they are just talking about it.
+	// This will be replaced in future by systemOne Models.
 	if strings.TrimSpace(response) == "" {
 		return
 	}

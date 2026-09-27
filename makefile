@@ -7,9 +7,9 @@ dev:
 	./app
 
 build:
-	docker build -t semplate . --no-cache
+	docker build -t sem . --no-cache
 
 rebuild:
 	docker compose down
-	docker build -t semplate . --no-cache
+	docker build -t sem . --no-cache
 	docker compose up -d

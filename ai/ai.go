@@ -13,8 +13,6 @@ import (
 	"time"
 )
 
-// TODO: throw this in default.go
-const endpoint = "https://api.groq.com/openai/v1/chat/completions"
 var ErrAllTokensExceeded = errors.New("all AI API tokens exceeded")
 var ErrTokensExceeded = errors.New("AI API tokens exceeded")
 
@@ -22,16 +20,22 @@ var (
 	apiKeys     []string
 	apiKeyMu    sync.Mutex
 	apiKeyIndex int
+	Endpoint    string
+	Model       string
 )
+
 func InitApiKeysAi() {
-	apiKeys = []string{
-		os.Getenv("API_KEY_AI_1"),
-		os.Getenv("API_KEY_AI_2"),
-		os.Getenv("API_KEY_AI_3"),
-		os.Getenv("API_KEY_AI_4"),
-		os.Getenv("API_KEY_AI_5"),
+	apiKeys = nil
+	for key := range strings.SplitSeq(os.Getenv("API_KEYS_AI"), ",") {
+		key = strings.TrimSpace(key)
+		if key == "" { continue }
+		apiKeys = append(apiKeys, key)
 	}
+
+	Endpoint = os.Getenv("AI_ENDPOINT")
+	Model = os.Getenv("AI_MODEL")
 }
+
 // returns API keys in round-robin order
 func nextAPIKey() (string, int) {
 	apiKeyMu.Lock()
@@ -101,12 +105,15 @@ type response struct {
 	Error any   `json:"error,omitempty"`
 }
 
+var Tools = []Tool{
+	{ Type: "browser_search" },
+}
+
 func call(messages []Message, apiKey string, apiKeyNumber int) (Message, error) {
 	start := time.Now()
 
 	body := request{
-		// TODO: throw model in default.go
-		Model:               "openai/gpt-oss-120b",
+		Model:               Model,
 		Messages:            messages,
 		Tools:               Tools,
 		Temperature:         0.7,
@@ -119,7 +126,7 @@ func call(messages []Message, apiKey string, apiKeyNumber int) (Message, error) 
 		return Message{}, err
 	}
 
-	req, err := http.NewRequest("POST", endpoint, bytes.NewReader(data))
+	req, err := http.NewRequest("POST", Endpoint, bytes.NewReader(data))
 	if err != nil {
 		return Message{}, err
 	}
@@ -183,7 +190,6 @@ func call(messages []Message, apiKey string, apiKeyNumber int) (Message, error) 
 }
 
 func Ask(systemPrompt string, prompt string) (string, error) {
-
 	messages := []Message{
 		{
 			Role: "system",
@@ -236,32 +242,7 @@ func Ask(systemPrompt string, prompt string) (string, error) {
 				return "", err
 			}
 
-			// No tool call = final response.
-			if len(message.ToolCalls) == 0 {
-				return message.Content, nil
-			}
-
-			// Add assistant's tool-call message.
-			messages = append(messages, message)
-
-			// Execute tools.
-			for _, toolCall := range message.ToolCalls {
-
-				if toolCall.Type != "function" {
-					continue
-				}
-
-				result, err := executeTool(toolCall)
-				if err != nil {
-					return "", err
-				}
-
-				messages = append(messages, Message{
-					Role:       "tool",
-					ToolCallID: toolCall.ID,
-					Content:    result,
-				})
-			}
+			return message.Content, nil
 		}
 	}
 	// every available token was rate limited
