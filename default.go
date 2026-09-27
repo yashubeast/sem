@@ -31,6 +31,8 @@ func init() {
 				`(?i)\bsem\b`,
 			},
 			SystemPrompt: systemPrompt,
+			// The amount of messages to send along with the request for Context.
+			// initiating request message + value
 			ContextMessageCount: 10,
 		},
 

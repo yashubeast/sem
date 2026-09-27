@@ -1,15 +1,14 @@
 package bot
 
 import (
+	"errors"
 	"fmt"
 	"log/slog"
 	"os"
 	"os/signal"
 	"regexp"
 	"sem/ai"
-	"slices"
 	"strings"
-	"errors"
 	"syscall"
 
 	"github.com/bwmarrin/discordgo"
@@ -163,68 +162,15 @@ func (b *Bot) isAiMentioned(s *discordgo.Session, m *discordgo.MessageCreate) bo
 
 func (b *Bot) handleAIMessage(s *discordgo.Session, m *discordgo.MessageCreate) {
 
-	// Fetch previous messages + the triggering message.
-	limit := b.config.AI.ContextMessageCount 
-	messages, err := s.ChannelMessages(
-		m.ChannelID,
-		limit,
-		m.ID,
-		"",
-		"",
-	)
+	contextString, err := b.buildAIContext(s, m)
 	if err != nil {
-		slog.Error("Failed to fetch AI context", "err", err)
+		slog.Error("Failed to build AI context", "err", err)
 		return
 	}
 
-	// Discord returns newest -> oldest, so reverse them.
-	slices.Reverse(messages)
-	context := make([]string, 0, len(messages)+1)
-
-	// insert discord server and channel context into context
-	channel, err := s.Channel(m.ChannelID)
-	if err != nil {
-		slog.Error("failed to fetch channel", "err", err)
-		return
-	}
-	guild, err := s.Guild(m.GuildID)
-	if err != nil {
-		slog.Error("failed to fetch guild", "err", err)
-		return
-	}
-	context = append(context, fmt.Sprintf(
-		"[discord context]\nserver: %s\nchannel: #%s\nchannel-description: %s",
-		guild.Name,
-		channel.Name,
-		channel.Topic,
-	))
-
-	// Previous messages = context.
-	for _, msg := range messages {
-		if strings.TrimSpace(msg.Content) == "" {
-			continue
-		}
-
-		context = append(context, fmt.Sprintf(
-			"%s: %s",
-			msg.Author.Username,
-			msg.Content,
-		))
-	}
-
-	// THIS is the actual message that triggered the AI call.
-	context = append(context, fmt.Sprintf(
-		"%s: %s",
-		m.Author.Username,
-		m.Content,
-	))
-
-	contextString := strings.Join(context, "\n")
-	
 	slog.Debug("AI context",
 		"channel", m.ChannelID,
-		"messages", len(context),
-		"context", "\n" + contextString,
+		"context", contextString,
 	)
 
 	response, err := ai.Ask(
